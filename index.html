@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Portal - hitokoto-dev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #fafafa;
+  --card-bg: #ffffff;
+  --text: #333333;
+  --text-sub: #777777;
+  --border: #e8e8e8;
+  --accent: #4a6cf7;
+  --accent-hover: #3a5ce5;
+  --tag-bg: #f0f2f5;
+  --tag-text: #555;
+  --rank-gold: #f5a623;
+  --rank-silver: #9b9b9b;
+  --rank-bronze: #cd7f32;
+}
+
+html {
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  padding: 0;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  padding: clamp(40px, 8vh, 80px) 20px clamp(24px, 4vh, 48px);
+}
+
+.header-icon {
+  font-size: clamp(36px, 8vw, 56px);
+  margin-bottom: 12px;
+}
+
+.header h1 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 8px;
+}
+
+.header p {
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  color: var(--text-sub);
+}
+
+/* Game Grid */
+.games {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Game Card */
+.game-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: clamp(20px, 3vw, 28px);
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+}
+
+.game-card:active {
+  transform: translateY(0);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.card-emoji {
+  font-size: clamp(32px, 6vw, 42px);
+  flex-shrink: 0;
+  width: 52px;
+  text-align: center;
+}
+
+.card-title {
+  font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.card-desc {
+  font-size: clamp(0.82rem, 1.8vw, 0.92rem);
+  color: var(--text-sub);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  font-size: 0.72rem;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* Ranking Section */
+.ranking-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+
+.ranking-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ranking-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--tag-bg);
+}
+
+.ranking-item:nth-child(1) { background: #fff8e1; }
+.ranking-item:nth-child(2) { background: #f5f5f5; }
+.ranking-item:nth-child(3) { background: #fef0e5; }
+
+.rank-badge {
+  font-weight: 700;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ranking-item:nth-child(1) .rank-badge { color: var(--rank-gold); }
+.ranking-item:nth-child(2) .rank-badge { color: var(--rank-silver); }
+.ranking-item:nth-child(3) .rank-badge { color: var(--rank-bronze); }
+
+.rank-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-score {
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.ranking-loading {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding: 4px 0;
+}
+
+.card-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--accent);
+  font-weight: 600;
+  gap: 4px;
+}
+
+.card-arrow svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.15s;
+}
+
+.game-card:hover .card-arrow svg {
+  transform: translateX(3px);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 24px 20px 40px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+}
+
+.footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.footer-credit {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: #aaa;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .games { padding: 0 12px 40px; gap: 12px; }
+  .game-card { padding: 16px; }
+  .card-emoji { width: 44px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-icon">🎮</div>
+  <h1>Game Portal</h1>
+  <p>ブラウザで遊べるミニゲーム集</p>
+</header>
+
+<main class="games">
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/high-and-low/" target="_blank" rel="noopener">
+    <div class="card-top">
+      <div class="card-emoji">🃏</div>
+      <div class="card-title">HiGH&LOW クイズ</div>
+    </div>
+    <div class="card-desc">
+      みんなが うろ覚えしていることを「高い？低い？」で当てるクイズゲーム。エンドレスモードでハイスコアを狙うか、10問スプリントで最速タイムを競おう！
+    </div>
+    <div class="card-tags">
+      <span class="tag">クイズ</span>
+      <span class="tag">ランキング付き</span>
+      <span class="tag">2モード</span>
+    </div>
+    <div class="ranking-section" id="ranking-high-and-low">
+      <div class="ranking-title">🏆 ランキング BEST 5</div>
+      <div class="ranking-loading">読み込み中...</div>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/english-phrase-quiz/" target="_blank" rel="noopener">
+    <div class="card-top">
+      <div class="card-emoji">📝</div>
+      <div class="card-title">English Phrase Quiz</div>
+    </div>
+    <div class="card-desc">
+      英語フレーズの正しい使い方を4択で当てるクイズ。日常会話で使えるフレーズを楽しく学ぼう！
+    </div>
+    <div class="card-tags">
+      <span class="tag">英語学習</span>
+      <span class="tag">4択クイズ</span>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/reflex-challenge/" target="_blank" rel="noopener">
+    <div class="card-top">
+      <div class="card-emoji">⚡</div>
+      <div class="card-title">リフレックス・チャレンジ</div>
+    </div>
+    <div class="card-desc">
+      4方向に出題される問題を反射神経で素早くタップ！スピードボーナスとコンボで高得点を狙え。グローバルランキングで世界中のプレイヤーと競争できる。
+    </div>
+    <div class="card-tags">
+      <span class="tag">反射神経</span>
+      <span class="tag">ランキング付き</span>
+      <span class="tag">スマホ対応</span>
+    </div>
+    <div class="ranking-section" id="ranking-reflex">
+      <div class="ranking-title">🏆 ランキング BEST 5</div>
+      <div class="ranking-loading">読み込み中...</div>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/kids-quiz/" target="_blank" rel="noopener">
+    <div class="card-top">
+      <div class="card-emoji">🐘</div>
+      <div class="card-title">どれがいちばん？ キッズクイズ</div>
+    </div>
+    <div class="card-desc">
+      「どれがいちばん おおきい？」「おもい？」「たかい？」を絵文字で選ぶ、小さなお子さま向けの比較クイズ。ひらがなだけで遊べるよ！
+    </div>
+    <div class="card-tags">
+      <span class="tag">キッズ向け</span>
+      <span class="tag">ひらがな</span>
+      <span class="tag">ランキング付き</span>
+    </div>
+    <div class="ranking-section" id="ranking-kids">
+      <div class="ranking-title">🏆 ランキング BEST 5</div>
+      <div class="ranking-loading">読み込み中...</div>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/yokeru/" target="_blank" rel="noopener">
+    <div class="card-top">
+      <div class="card-emoji">🎯</div>
+      <div class="card-title">TAMAYOKE REBORN</div>
+    </div>
+    <div class="card-desc">
+      降り注ぐ弾を華麗によけろ！安全地帯や倍速エリアを活用して高スコアを目指す弾よけアクションゲーム。
+    </div>
+    <div class="card-tags">
+      <span class="tag">アクション</span>
+      <span class="tag">弾よけ</span>
+      <span class="tag">スマホ対応</span>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+</main>
+
+<footer class="footer">
+  <a href="https://github.com/hitokoto-dev" target="_blank" rel="noopener">GitHub: hitokoto-dev</a>
+  <div class="footer-credit">All games created with Claude Cowork</div>
+</footer>
+
+<script>
+(function() {
+  const SUPABASE_URL = 'https://mvnhojzeshbquobffkmq.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bmhvanplc2hicXVvYmZma21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MjQ4NzgsImV4cCI6MjA4ODAwMDg3OH0.kJNoHqJpmC5PLuojOGrnmWBT4TMZG5HbIv7bFY1D3QI';
+
+  const rankings = [
+    { elementId: 'ranking-high-and-low', table: 'high_and_low_scores' },
+    { elementId: 'ranking-reflex', table: 'scores' },
+    { elementId: 'ranking-kids', table: 'kids_scores' },
+  ];
+
+  async function fetchRanking(table) {
+    const url = `${SUPABASE_URL}/rest/v1/${table}?select=name,score&order=score.desc&limit=5`;
+    const res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    if (!res.ok) throw new Error('Failed to fetch');
+    return res.json();
+  }
+
+  function renderRanking(elementId, data) {
+    const container = document.getElementById(elementId);
+    if (!container) return;
+
+    if (!data || data.length === 0) {
+      container.querySelector('.ranking-loading').textContent = 'まだランキングデータがありません';
+      return;
+    }
+
+    const list = document.createElement('ol');
+    list.className = 'ranking-list';
+
+    data.forEach((item, i) => {
+      const li = document.createElement('li');
+      li.className = 'ranking-item';
+
+      const medals = ['🥇', '🥈', '🥉'];
+      const badge = document.createElement('span');
+      badge.className = 'rank-badge';
+      badge.textContent = i < 3 ? medals[i] : `${i + 1}`;
+
+      const name = document.createElement('span');
+      name.className = 'rank-name';
+      name.textContent = item.name || '---';
+
+      const score = document.createElement('span');
+      score.className = 'rank-score';
+      score.textContent = item.score.toLocaleString() + ' pt';
+
+      li.appendChild(badge);
+      li.appendChild(name);
+      li.appendChild(score);
+      list.appendChild(li);
+    });
+
+    const loading = container.querySelector('.ranking-loading');
+    if (loading) loading.remove();
+    container.appendChild(list);
+  }
+
+  rankings.forEach(async ({ elementId, table }) => {
+    try {
+      const data = await fetchRanking(table);
+      renderRanking(elementId, data);
+    } catch (e) {
+      const container = document.getElementById(elementId);
+      if (container) {
+        const loading = container.querySelector('.ranking-loading');
+        if (loading) loading.textContent = 'ランキングを取得できませんでした';
+      }
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
