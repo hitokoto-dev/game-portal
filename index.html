@@ -11,19 +11,19 @@
 
 :root {
   --bg: #0a0a0a;
-  --card-bg: rgba(0, 20, 0, 0.7);
-  --card-border: rgba(0, 255, 65, 0.15);
-  --text: #c0ffc0;
-  --text-sub: #4a9e4a;
-  --border: rgba(0, 255, 65, 0.1);
+  --card-bg: rgba(0, 12, 0, 0.92);
+  --card-border: rgba(0, 255, 65, 0.35);
+  --text: #e8e8e8;
+  --text-sub: #b0b0b0;
+  --border: rgba(0, 255, 65, 0.2);
   --accent: #00ff41;
   --accent-hover: #33ff66;
   --accent-dim: #009926;
-  --tag-bg: rgba(0, 255, 65, 0.08);
-  --tag-text: #66cc66;
-  --rank-gold: #ffdd00;
-  --rank-silver: #aaddaa;
-  --rank-bronze: #cc9944;
+  --tag-bg: rgba(0, 255, 65, 0.1);
+  --tag-text: #88ee88;
+  --rank-gold: #ffd700;
+  --rank-silver: #c0c0c0;
+  --rank-bronze: #cd7f32;
   --glow: 0 0 10px rgba(0, 255, 65, 0.3);
 }
 
@@ -50,6 +50,7 @@ body {
   height: 100%;
   z-index: 0;
   pointer-events: none;
+  opacity: 0.4;
 }
 
 /* Content wrapper above rain */
@@ -67,7 +68,9 @@ body {
 .header-icon {
   font-size: clamp(36px, 8vw, 56px);
   margin-bottom: 12px;
-  filter: drop-shadow(0 0 12px rgba(0, 255, 65, 0.6));
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(0, 255, 65, 0.6);
 }
 
 .header h1 {
@@ -90,14 +93,13 @@ body {
   display: inline-block;
   margin-top: 16px;
   padding: 8px 20px;
-  background: rgba(0, 255, 65, 0.06);
-  border: 1px solid rgba(0, 255, 65, 0.25);
+  background: rgba(0, 255, 65, 0.08);
+  border: 1px solid rgba(0, 255, 65, 0.3);
   border-radius: 24px;
   font-size: clamp(0.78rem, 1.8vw, 0.88rem);
-  color: #66ff88;
+  color: #cccccc;
   letter-spacing: 0.04em;
   font-family: 'Share Tech Mono', monospace;
-  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
 }
 
 .cowork-badge strong {
@@ -118,21 +120,21 @@ body {
 /* Game Card */
 .game-card {
   background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  border: 2px solid var(--card-border);
   border-radius: 8px;
   padding: clamp(20px, 3vw, 28px);
   text-decoration: none;
   color: inherit;
   display: block;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .game-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(0, 255, 65, 0.1), 0 0 60px rgba(0, 255, 65, 0.05);
-  border-color: rgba(0, 255, 65, 0.4);
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.15), 0 0 60px rgba(0, 255, 65, 0.08);
+  border-color: rgba(0, 255, 65, 0.6);
 }
 
 .game-card:active {
@@ -147,18 +149,26 @@ body {
 }
 
 .card-emoji {
-  font-size: clamp(32px, 6vw, 42px);
+  font-size: clamp(22px, 4vw, 28px);
   flex-shrink: 0;
-  width: 52px;
-  text-align: center;
-  filter: drop-shadow(0 0 6px rgba(0, 255, 65, 0.4));
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 255, 65, 0.1);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 8px;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
 }
 
 .card-title {
   font-size: clamp(1.05rem, 2.5vw, 1.25rem);
   font-weight: 700;
   line-height: 1.3;
-  color: var(--accent);
+  color: #ffffff;
   font-family: 'Share Tech Mono', 'Noto Sans JP', monospace;
   text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
 }
@@ -183,7 +193,7 @@ body {
   padding: 3px 10px;
   border-radius: 4px;
   white-space: nowrap;
-  border: 1px solid rgba(0, 255, 65, 0.1);
+  border: 1px solid rgba(0, 255, 65, 0.2);
   font-family: 'Share Tech Mono', monospace;
 }
 
@@ -191,7 +201,7 @@ body {
 .ranking-section {
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 1px solid rgba(0, 255, 65, 0.1);
+  border-top: 1px solid rgba(0, 255, 65, 0.2);
 }
 
 .ranking-title {
@@ -221,13 +231,13 @@ body {
   padding: 4px 8px;
   border-radius: 4px;
   background: rgba(0, 255, 65, 0.04);
-  border: 1px solid rgba(0, 255, 65, 0.06);
+  border: 1px solid rgba(0, 255, 65, 0.1);
   font-family: 'Share Tech Mono', 'Noto Sans JP', monospace;
 }
 
-.ranking-item:nth-child(1) { background: rgba(255, 221, 0, 0.08); border-color: rgba(255, 221, 0, 0.15); }
-.ranking-item:nth-child(2) { background: rgba(170, 221, 170, 0.06); border-color: rgba(170, 221, 170, 0.1); }
-.ranking-item:nth-child(3) { background: rgba(204, 153, 68, 0.08); border-color: rgba(204, 153, 68, 0.12); }
+.ranking-item:nth-child(1) { background: rgba(255, 215, 0, 0.1); border-color: rgba(255, 215, 0, 0.25); }
+.ranking-item:nth-child(2) { background: rgba(192, 192, 192, 0.08); border-color: rgba(192, 192, 192, 0.2); }
+.ranking-item:nth-child(3) { background: rgba(205, 127, 50, 0.1); border-color: rgba(205, 127, 50, 0.2); }
 
 .rank-badge {
   font-weight: 700;
@@ -296,10 +306,10 @@ body {
 
 .footer-credit {
   font-size: 0.72rem;
-  color: #336633;
+  color: #666666;
 }
 
-/* Scan line effect */
+/* Scan line effect - very subtle */
 .content-wrap::before {
   content: '';
   position: fixed;
@@ -313,8 +323,8 @@ body {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
+    rgba(0, 0, 0, 0.02) 2px,
+    rgba(0, 0, 0, 0.02) 4px
   );
 }
 
@@ -322,7 +332,7 @@ body {
 @media (max-width: 480px) {
   .games { padding: 0 12px 40px; gap: 12px; }
   .game-card { padding: 16px; }
-  .card-emoji { width: 44px; }
+  .card-emoji { width: 40px; height: 40px; }
 }
 </style>
 </head>
@@ -333,17 +343,17 @@ body {
 <div class="content-wrap">
 
 <header class="header">
-  <div class="header-icon">🎮</div>
+  <div class="header-icon">[GAME]</div>
   <h1>Game Portal</h1>
   <p>ブラウザで遊べるミニゲーム集</p>
-  <div class="cowork-badge">✨ All games created with <strong>Claude Cowork</strong></div>
+  <div class="cowork-badge">All games created with <strong>Claude Cowork</strong></div>
 </header>
 
 <main class="games">
 
   <a class="game-card" href="https://hitokoto-dev.github.io/high-and-low/" target="_blank" rel="noopener">
     <div class="card-top">
-      <div class="card-emoji">��</div>
+      <div class="card-emoji">H&L</div>
       <div class="card-title">HiGH&LOW クイズ</div>
     </div>
     <div class="card-desc">
@@ -355,7 +365,7 @@ body {
       <span class="tag">2モード</span>
     </div>
     <div class="ranking-section" id="ranking-high-and-low">
-      <div class="ranking-title">🏆 ランキング BEST 5</div>
+      <div class="ranking-title">// RANKING BEST 5</div>
       <div class="ranking-loading">読み込み中...</div>
     </div>
     <div class="card-arrow">
@@ -366,7 +376,7 @@ body {
 
   <a class="game-card" href="https://hitokoto-dev.github.io/english-phrase-quiz/" target="_blank" rel="noopener">
     <div class="card-top">
-      <div class="card-emoji">📝</div>
+      <div class="card-emoji">EN</div>
       <div class="card-title">English Phrase Quiz</div>
     </div>
     <div class="card-desc">
@@ -384,7 +394,7 @@ body {
 
   <a class="game-card" href="https://hitokoto-dev.github.io/reflex-challenge/" target="_blank" rel="noopener">
     <div class="card-top">
-      <div class="card-emoji">⚡</div>
+      <div class="card-emoji">RF</div>
       <div class="card-title">リフレックス・チャレンジ</div>
     </div>
     <div class="card-desc">
@@ -396,7 +406,7 @@ body {
       <span class="tag">スマホ対応</span>
     </div>
     <div class="ranking-section" id="ranking-reflex">
-      <div class="ranking-title">🏆 ランキング BEST 5</div>
+      <div class="ranking-title">// RANKING BEST 5</div>
       <div class="ranking-loading">読み込み中...</div>
     </div>
     <div class="card-arrow">
@@ -407,7 +417,7 @@ body {
 
   <a class="game-card" href="https://hitokoto-dev.github.io/kids-quiz/" target="_blank" rel="noopener">
     <div class="card-top">
-      <div class="card-emoji">🐘</div>
+      <div class="card-emoji">KQ</div>
       <div class="card-title">どれがいちばん？ キッズクイズ</div>
     </div>
     <div class="card-desc">
@@ -419,7 +429,7 @@ body {
       <span class="tag">ランキング付き</span>
     </div>
     <div class="ranking-section" id="ranking-kids">
-      <div class="ranking-title">🏆 ランキング BEST 5</div>
+      <div class="ranking-title">// RANKING BEST 5</div>
       <div class="ranking-loading">読み込み中...</div>
     </div>
     <div class="card-arrow">
@@ -430,7 +440,7 @@ body {
 
   <a class="game-card" href="https://hitokoto-dev.github.io/yokeru/" target="_blank" rel="noopener">
     <div class="card-top">
-      <div class="card-emoji">🎯</div>
+      <div class="card-emoji">TY</div>
       <div class="card-title">TAMAYOKE REBORN</div>
     </div>
     <div class="card-desc">
@@ -468,7 +478,7 @@ body {
   resize();
   window.addEventListener('resize', resize);
 
-  const chars = 'アイウエオカキクケコサシスセスタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const fontSize = 14;
   let columns = Math.floor(canvas.width / fontSize);
   let drops = new Array(columns).fill(1);
@@ -486,13 +496,11 @@ body {
     ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = '#00ff41';
     ctx.font = fontSize + 'px Share Tech Mono, monospace';
 
     for (let i = 0; i < drops.length; i++) {
       const char = chars[Math.floor(Math.random() * chars.length)];
 
-      // Vary brightness
       const brightness = Math.random();
       if (brightness > 0.95) {
         ctx.fillStyle = '#ffffff';
@@ -553,10 +561,9 @@ body {
       const li = document.createElement('li');
       li.className = 'ranking-item';
 
-      const medals = ['🥇', '🥈', '🥉'];
       const badge = document.createElement('span');
       badge.className = 'rank-badge';
-      badge.textContent = i < 3 ? medals[i] : `${i + 1}`;
+      badge.textContent = `${i + 1}`;
 
       const name = document.createElement('span');
       name.className = 'rank-name';
