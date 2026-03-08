@@ -328,11 +328,131 @@ body {
   );
 }
 
+/* Stats Dashboard */
+.stats-section {
+  max-width: 720px;
+  margin: 0 auto 24px;
+  padding: 0 20px;
+}
+
+.stats-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: none;
+  border: 1px solid rgba(0, 255, 65, 0.25);
+  color: var(--accent);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  padding: 10px 18px;
+  border-radius: 6px;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.stats-toggle:hover {
+  background: rgba(0, 255, 65, 0.06);
+  border-color: rgba(0, 255, 65, 0.5);
+}
+
+.stats-toggle .arrow {
+  transition: transform 0.2s;
+  font-size: 0.7rem;
+}
+
+.stats-toggle.open .arrow {
+  transform: rotate(90deg);
+}
+
+.stats-panel {
+  display: none;
+  margin-top: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.stats-panel.open {
+  display: block;
+}
+
+.stats-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Share Tech Mono', 'Noto Sans JP', monospace;
+  font-size: 0.82rem;
+}
+
+.stats-label {
+  width: 90px;
+  flex-shrink: 0;
+  color: var(--text-sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-bar-wrap {
+  flex: 1;
+  height: 20px;
+  background: rgba(0, 255, 65, 0.06);
+  border: 1px solid rgba(0, 255, 65, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stats-bar {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0, 255, 65, 0.5), rgba(0, 255, 65, 0.8));
+  border-radius: 3px;
+  transition: width 0.6s ease;
+  min-width: 2px;
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+.stats-count {
+  width: 50px;
+  text-align: right;
+  color: var(--accent);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.stats-total {
+  text-align: right;
+  margin-top: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 255, 65, 0.15);
+}
+
+.stats-total strong {
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
 /* Mobile adjustments */
 @media (max-width: 480px) {
   .games { padding: 0 12px 40px; gap: 12px; }
   .game-card { padding: 16px; }
   .card-emoji { width: 40px; height: 40px; }
+  .stats-section { padding: 0 12px; }
+  .stats-label { width: 70px; font-size: 0.75rem; }
 }
 </style>
 </head>
@@ -349,9 +469,21 @@ body {
   <div class="cowork-badge">All games created with <strong>Claude Cowork</strong></div>
 </header>
 
+<section class="stats-section">
+  <button class="stats-toggle" id="stats-toggle" onclick="toggleStats()">
+    <span class="arrow">▶</span> // ACCESS COUNTER
+  </button>
+  <div class="stats-panel" id="stats-panel">
+    <div class="stats-bar-container" id="stats-bars">
+      <div style="color:var(--text-sub);font-family:'Share Tech Mono',monospace;font-size:0.8rem;">読み込み中...</div>
+    </div>
+    <div class="stats-total" id="stats-total"></div>
+  </div>
+</section>
+
 <main class="games">
 
-  <a class="game-card" href="https://hitokoto-dev.github.io/reflex-challenge/" target="_blank" rel="noopener">
+  <a class="game-card" href="https://hitokoto-dev.github.io/reflex-challenge/" target="_blank" rel="noopener" data-slug="reflex-challenge">
     <div class="card-top">
       <div class="card-emoji">RF</div>
       <div class="card-title">リフレックス・チャレンジ</div>
@@ -374,7 +506,7 @@ body {
     </div>
   </a>
 
-  <a class="game-card" href="https://hitokoto-dev.github.io/english-phrase-quiz/" target="_blank" rel="noopener">
+  <a class="game-card" href="https://hitokoto-dev.github.io/english-phrase-quiz/" target="_blank" rel="noopener" data-slug="english-phrase-quiz">
     <div class="card-top">
       <div class="card-emoji">EN</div>
       <div class="card-title">English Phrase Quiz</div>
@@ -392,7 +524,7 @@ body {
     </div>
   </a>
 
-  <a class="game-card" href="https://hitokoto-dev.github.io/english-phrase-reverse-quiz/" target="_blank" rel="noopener">
+  <a class="game-card" href="https://hitokoto-dev.github.io/english-phrase-reverse-quiz/" target="_blank" rel="noopener" data-slug="english-phrase-reverse-quiz">
     <div class="card-top">
       <div class="card-emoji">RQ</div>
       <div class="card-title">英語フレーズ逆引きクイズ</div>
@@ -411,7 +543,7 @@ body {
     </div>
   </a>
 
-  <a class="game-card" href="https://hitokoto-dev.github.io/yokeru/" target="_blank" rel="noopener">
+  <a class="game-card" href="https://hitokoto-dev.github.io/yokeru/" target="_blank" rel="noopener" data-slug="yokeru">
     <div class="card-top">
       <div class="card-emoji">TY</div>
       <div class="card-title">TAMAYOKE REBORN</div>
@@ -430,7 +562,7 @@ body {
     </div>
   </a>
 
-  <a class="game-card" href="https://hitokoto-dev.github.io/high-and-low/" target="_blank" rel="noopener">
+  <a class="game-card" href="https://hitokoto-dev.github.io/high-and-low/" target="_blank" rel="noopener" data-slug="high-and-low">
     <div class="card-top">
       <div class="card-emoji">H&L</div>
       <div class="card-title">HiGH&LOW クイズ</div>
@@ -453,7 +585,7 @@ body {
     </div>
   </a>
 
-  <a class="game-card" href="https://hitokoto-dev.github.io/kids-quiz/" target="_blank" rel="noopener">
+  <a class="game-card" href="https://hitokoto-dev.github.io/kids-quiz/" target="_blank" rel="noopener" data-slug="kids-quiz">
     <div class="card-top">
       <div class="card-emoji">KQ</div>
       <div class="card-title">どれがいちばん？ キッズクイズ</div>
@@ -476,7 +608,7 @@ body {
     </div>
   </a>
 
-  <a class="game-card" href="https://hitokoto-dev.github.io/typing-reflex/" target="_blank" rel="noopener">
+  <a class="game-card" href="https://hitokoto-dev.github.io/typing-reflex/" target="_blank" rel="noopener" data-slug="typing-reflex">
     <div class="card-top">
       <div class="card-emoji">KB</div>
       <div class="card-title">反射キーボード・スマッシュ</div>
@@ -499,7 +631,7 @@ body {
     </div>
   </a>
 
-  <a class="game-card" href="https://hitokoto-dev.github.io/true-false-blitz/" target="_blank" rel="noopener">
+  <a class="game-card" href="https://hitokoto-dev.github.io/true-false-blitz/" target="_blank" rel="noopener" data-slug="true-false-blitz">
     <div class="card-top">
       <div class="card-emoji">TF</div>
       <div class="card-title">真偽スピード判定</div>
@@ -520,28 +652,7 @@ body {
     </div>
   </a>
 
-
-      <a class="game-card" href="https://hitokoto-dev.github.io/marubatsu-sprint/" target="_blank" rel="noopener">
-        <div class="card-top">
-          <div class="card-emoji">OX</div>
-          <div class="card-title">○✕ 早押し判定</div>
-        </div>
-        <div class="card-desc">表示される文が正しければ○、間違いなら✕を素早くタップ！スピードボーナス＆コンボで高得点を狙え。70問収録。</div>
-        <div class="card-tags">
-          <span class="tag">○✕クイズ</span>
-          <span class="tag">ランキング付き</span>
-          <span class="tag">スマホ対応</span>
-        </div>
-        <div class="ranking-section" id="ranking-marubatsu">
-          <div class="ranking-title">// RANKING BEST 5</div>
-          <div class="ranking-loading">読み込み中...</div>
-        </div>
-        <div class="card-arrow">
-          あそぶ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        </div>
-      </a>
-
-    </main>
+</main>
 
 <footer class="footer">
   <div class="footer-credit">&copy; hitokoto-dev</div>
@@ -562,7 +673,7 @@ body {
   resize();
   window.addEventListener('resize', resize);
 
-  const chars = 'アイウエオカキクケコサシスセスタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const fontSize = 14;
   let columns = Math.floor(canvas.width / fontSize);
   let drops = new Array(columns).fill(1);
@@ -617,7 +728,6 @@ body {
     { elementId: 'ranking-kids', table: 'kids_scores' },
     { elementId: 'ranking-true-false-blitz', table: 'true_false_blitz_scores' },
     { elementId: 'ranking-typing', table: 'typing_reflex_scores' },
-      { elementId: 'ranking-marubatsu', table: 'marubatsu_sprint_scores' },
   ];
 
   async function fetchRanking(table) {
@@ -683,7 +793,88 @@ body {
       }
     }
   });
+
+  // Click tracking
+  const SLUG_TO_NAME = {
+    'reflex-challenge': 'リフレックス',
+    'english-phrase-quiz': 'EN Phrase',
+    'english-phrase-reverse-quiz': '英語逆引き',
+    'yokeru': 'TAMAYOKE',
+    'high-and-low': 'HiGH&LOW',
+    'kids-quiz': 'キッズクイズ',
+    'typing-reflex': 'キーボード',
+    'true-false-blitz': '真偽判定',
+    'marubatsu-sprint': '○✕早押し',
+    'emoji-flash-math': '暗算フラッシュ',
+  };
+
+  document.querySelectorAll('.game-card[data-slug]').forEach(card => {
+    card.addEventListener('click', () => {
+      const slug = card.dataset.slug;
+      if (!slug) return;
+      fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_page_view`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slug }),
+      }).catch(() => {});
+    });
+  });
+
+  // Stats dashboard
+  async function loadStats() {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/game_stats?select=game_slug,view_count&order=view_count.desc`;
+      const res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        }
+      });
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      renderStats(data);
+    } catch (e) {
+      document.getElementById('stats-bars').innerHTML =
+        '<div style="color:var(--text-sub);font-family:\'Share Tech Mono\',monospace;font-size:0.8rem;">データを取得できませんでした</div>';
+    }
+  }
+
+  function renderStats(data) {
+    const container = document.getElementById('stats-bars');
+    const totalEl = document.getElementById('stats-total');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-sub);font-family:\'Share Tech Mono\',monospace;font-size:0.8rem;">まだアクセスデータがありません</div>';
+      return;
+    }
+    const maxCount = Math.max(...data.map(d => d.view_count), 1);
+    const total = data.reduce((s, d) => s + d.view_count, 0);
+
+    container.innerHTML = data.map(d => {
+      const pct = (d.view_count / maxCount * 100).toFixed(1);
+      const name = SLUG_TO_NAME[d.game_slug] || d.game_slug;
+      return `<div class="stats-row">
+        <span class="stats-label">${name}</span>
+        <div class="stats-bar-wrap"><div class="stats-bar" style="width:${pct}%"></div></div>
+        <span class="stats-count">${d.view_count.toLocaleString()}</span>
+      </div>`;
+    }).join('');
+
+    totalEl.innerHTML = `TOTAL: <strong>${total.toLocaleString()}</strong> views`;
+  }
+
+  loadStats();
 })();
+
+function toggleStats() {
+  const btn = document.getElementById('stats-toggle');
+  const panel = document.getElementById('stats-panel');
+  btn.classList.toggle('open');
+  panel.classList.toggle('open');
+}
 </script>
 
 </body>
