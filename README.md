@@ -1,24 +1,30 @@
-# HITOKOTO ARCADE · Edition 02
+# HITOKOTO ARCADE · Edition 03
 
-Browser game portal for hitokoto-dev. Open `index.html`, or serve this directory with a static HTTP server. No build step is required.
+Eight browser games rebuilt as distinct worlds, sharing local progression, achievements, daily missions, favorites, and records. Static HTML/CSS/JavaScript; no build, account, external audio, or gameplay API is required.
 
-## What changed
+## Worlds
 
-- A responsive, searchable collection with category filters, favorites, a random game shortcut, and browser-local play history.
-- Eight new editions under `games/`, preserving the original game rules and sound engines.
-- Automatic records separated by game and mode, mistake review, English phrase review practice, shared volume settings, fullscreen controls, and additional keyboard accessibility.
-- Duplicate answer locks in True / False and typing, a resize and background pause improvement for TAMAYOKE, and repairs to two existing text encoding errors.
+- PULSE GATE: 24 directional, color, arithmetic, reverse and sequence gates; three stages and a chaos route.
+- NEON DRIFT: three sectors, bullet patterns, graze scoring, shields, safe zones, central multiplier, cooldown dash, a final boss sector, 90-second and endless routes.
+- ORBIT TOWER: 12 floors of high/same/low comparisons; optional double-risk answers and explanations with sources.
+- TRUTH SIGNAL: a 45-second true/false signal run; combo fever, science and procedural logic routes.
+- WORD ATELIER: 38 phrases, three chapters, browser speech, meaning choices, focused review and a persistent phrase book with mastery stars.
+- PHRASE VOYAGE: situation-to-English choices, airport/hotel/city chapters and review practice.
+- KEYSTREAM: English and kana word lanes, combo scoring, editable full-text input, composition-safe IME handling, and a 45-second race.
+- FOREST FRIENDS: generated clay object imagery, picture size/count/number comparisons, three areas and 12 untimed questions.
+
+All games have normal/daily/practice entries, keyboard or touch controls, pause, audio volume, fullscreen where supported, and automatic results. Daily question and spawn seeds use the date in Japan (JST), game and route. Records remain on the visitor's browser and are not global leaderboards.
 
 ## Preservation
 
-`archive/` contains byte-for-byte copies of the original eight games and portal. `archive-manifest.json` records source commit IDs and SHA-256 hashes. The original per-game repositories and URLs remain usable. The previous portal also remains at `archive/portal/`.
+`archive/` retains the byte-identical original games and portal. `editions/02/` contains the complete prior Edition 02 release, including its own assets and archive. Existing original per-game repositories are unchanged. New records use `arcade3:*`; previous editions retain their own storage keys.
 
-## Records
+## Art
 
-New records use `arcade:*` or `arcade-v2:*` browser storage keys. The original records use their original keys. The new editions do not write scores to the classic Supabase boards. A read-only "旧版" tab retains access to classic online scores. New global rankings will require a separate version-aware backend rather than sharing the classic boards.
+Three original artworks were generated with the built-in image-generation tool: cosmic portal hero, eight cover worlds, and sixteen clay comparison objects. Runtime JPEGs are in `assets/art/`. Their detailed production prompts and original PNG deliverables are retained in this chat's outputs.
 
-## Validation (2026-10-14)
+## Validation
 
-All eight games passed DOM-based game-flow tests for start, correct and incorrect answers, result, storage, review, and applicable retry behavior. Duplicate scoring guards passed. Every preserved file matched its SHA-256 digest. All eight opened and started in the browser without runtime console errors; desktop and representative mobile layouts were visually checked. Portal filters, search, favorites, archive switching, and the record dialog were tested in the browser. Physical Android keyboard, audio playback, and fullscreen behavior remain device-dependent and have not been tested on the user's device.
+DOM-based tests cover all 24 game/mode combinations, pause clocks, results, rewards, review practice, duplicate response guards, daily repeatability, 480 reflex question fixtures, kana composition, endless continuation and all English routes. Prior releases are checked byte-for-byte. Browser QA covers responsive portal, collection controls and actual game UI. Native-device sound, speech availability, soft keyboard and fullscreen behavior depend on the visitor's browser.
 
-Deploy as a static site. The production GitHub Pages portal uses this repository's `main` branch.
+Serve the repository root as a static site. GitHub Pages publishes `main`. Open `index.html` to begin.
