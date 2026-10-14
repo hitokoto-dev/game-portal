@@ -21,10 +21,10 @@ All games have normal/daily/practice entries, keyboard or touch controls, pause,
 
 ## Art
 
-Three original artworks were generated with the built-in image-generation tool: cosmic portal hero, eight cover worlds, and sixteen clay comparison objects. Runtime JPEGs are in `assets/art/`. Their detailed production prompts and original PNG deliverables are retained in this chat's outputs.
+The portal hero, cover atlas and sixteen clay comparison objects are retained. Gameplay now uses four high-resolution paired environment atlases, transparent boss/fox/crystal sprites, and a separate player spacecraft. Physical radial gates, stacked floors and levers, an orbiting crystal reactor, open book and loose cards, boarding passes, tactile keyboard keys, and carved forest signs are rendered as interactive HTML/CSS/canvas. Correct answers, mistakes, typing, dashes and collisions produce visual feedback. Reduced-motion and pause preferences are respected. Runtime assets are in `assets/art/`; full generation prompts and original PNGs are retained in the chat outputs.
 
 ## Validation
 
-DOM-based tests cover all 24 game/mode combinations, pause clocks, results, rewards, review practice, duplicate response guards, daily repeatability, 480 reflex question fixtures, kana composition, endless continuation and all English routes. Prior releases are checked byte-for-byte. Browser QA covers responsive portal, collection controls and actual game UI. Native-device sound, speech availability, soft keyboard and fullscreen behavior depend on the visitor's browser.
+DOM-based tests cover all 24 game/mode combinations, pause clocks, results, rewards, review practice, duplicate response guards, daily repeatability, 480 reflex question fixtures, kana composition, endless continuation and all English routes. Prior releases are checked byte-for-byte. Browser QA covers all eight actual gameplay scenes at desktop and mobile sizes, response inputs, drawn spacecraft and boss sector. The portal and preserved editions are unchanged in this visual update. Native-device sound, speech availability, soft keyboard and fullscreen behavior depend on the visitor's browser.
 
 Serve the repository root as a static site. GitHub Pages publishes `main`. Open `index.html` to begin.
