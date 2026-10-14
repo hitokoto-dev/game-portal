@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🃏 HiGH&LOW クイズ</title>
+<meta name="description" content="みんなうろ覚えしてることをHiGH&LOWで当てるクイズゲーム！">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Zen+Maru+Gothic:wght@700;900&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a1a;
+  --card: #151530;
+  --accent: #ff6b35;
+  --accent2: #00e5ff;
+  --high: #ff4081;
+  --same: #ffeb3b;
+  --low: #448aff;
+  --success: #00e676;
+  --fail: #ff1744;
+  --text: #ffffff;
+  --dim: #8888aa;
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  padding: 20px;
+}
+.screen.active { display: flex; }
+
+/* ===== Title Screen ===== */
+#title-screen {
+  gap: 14px;
+  background: radial-gradient(ellipse at center, #1a1a3a 0%, var(--bg) 70%);
+}
+
+.game-logo {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: clamp(2.2rem, 8vw, 4.5rem);
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.2;
+}
+.logo-high {
+  background: linear-gradient(135deg, var(--high), #ff8a80);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.logo-and {
+  color: var(--same);
+  -webkit-text-fill-color: var(--same);
+  font-size: 0.6em;
+}
+.logo-low {
+  background: linear-gradient(135deg, var(--low), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-subtitle {
+  color: var(--dim);
+  font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+/* Mode Selection */
+.mode-select {
+  display: flex;
+  gap: 12px;
+  margin: 4px 0;
+}
+.mode-btn {
+  background: var(--card);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 16px 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  color: var(--text);
+  font-family: inherit;
+  flex: 1;
+  max-width: 175px;
+}
+.mode-btn:active { transform: scale(0.95); }
+.mode-endless { border-color: var(--accent); }
+.mode-sprint { border-color: var(--accent2); }
+.mode-icon { font-size: 2rem; margin-bottom: 4px; }
+.mode-name { font-weight: 900; font-size: 1rem; margin-bottom: 4px; }
+.mode-desc { font-size: 0.75rem; color: var(--dim); line-height: 1.4; }
+
+.btn {
+  padding: 16px 48px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 60px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.btn:active { transform: scale(0.95); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #ff8a50);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(255,107,53,0.4);
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--accent2);
+  border: 2px solid var(--accent2);
+  padding: 12px 36px;
+  font-size: 1rem;
+}
+
+.best-score-display {
+  color: var(--accent2);
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
+/* ===== Sound Toggle ===== */
+.sound-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  background: rgba(255,255,255,0.08);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Countdown ===== */
+.countdown-number {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: clamp(6rem, 20vw, 12rem);
+  font-weight: 900;
+  color: var(--accent2);
+  text-shadow: 0 0 40px rgba(0,229,255,0.5);
+}
+@keyframes countPulse {
+  0% { transform: scale(1.3); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ===== Game Screen ===== */
+#game-screen {
+  justify-content: flex-start;
+  padding-top: 10px;
+  gap: 0;
+}
+
+.game-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  padding: 0 4px 6px;
+  font-size: 0.9rem;
+}
+.hud-score { color: var(--accent2); font-weight: 700; }
+.hud-combo { color: var(--accent); font-weight: 700; font-size: 0.85rem; }
+.hud-progress { color: var(--dim); }
+.hud-timer-display {
+  color: var(--accent2);
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-bar {
+  width: 100%;
+  max-width: 480px;
+  height: 5px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+.timer-bar-fill {
+  height: 100%;
+  background: var(--accent2);
+  border-radius: 3px;
+  transition: width 0.05s linear;
+}
+
+.question-area {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 18px 20px;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.q-category {
+  font-size: 0.85rem;
+  color: var(--dim);
+  margin-bottom: 6px;
+}
+.q-main-text {
+  font-size: clamp(1rem, 3.5vw, 1.3rem);
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.q-ref-inline {
+  font-size: clamp(0.85rem, 2.8vw, 1.05rem);
+  color: var(--accent2);
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 8px 12px;
+  background: rgba(0,229,255,0.08);
+  border-radius: 10px;
+  margin-bottom: 6px;
+}
+.q-hint {
+  font-size: 0.8rem;
+  color: var(--dim);
+  margin-top: 6px;
+}
+
+/* ===== Choice Buttons ===== */
+.choices-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+}
+.choice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 14px;
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 2px solid transparent;
+  background: rgba(255,255,255,0.06);
+}
+.choice-btn:active { transform: scale(0.97); }
+#btn-high { color: var(--high); border-color: rgba(255,64,129,0.25); }
+#btn-same { color: var(--same); border-color: rgba(255,235,59,0.2); }
+#btn-low  { color: var(--low); border-color: rgba(68,138,255,0.25); }
+
+.choice-btn.correct {
+  background: rgba(0,230,118,0.2);
+  border-color: var(--success);
+  color: var(--success);
+}
+.choice-btn.wrong {
+  background: rgba(255,23,68,0.2);
+  border-color: var(--fail);
+  color: var(--fail);
+}
+
+.choice-icon { font-size: 1.2em; }
+.choice-label { min-width: 70px; text-align: center; }
+
+/* ===== Answer Reveal ===== */
+.answer-reveal {
+  position: fixed;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.93);
+  border: 2px solid var(--accent2);
+  border-radius: 20px;
+  padding: 20px 32px;
+  text-align: center;
+  z-index: 20;
+  animation: revealIn 0.35s ease-out;
+  max-width: 90vw;
+}
+.answer-reveal.wrong-reveal {
+  border-color: var(--fail);
+}
+@keyframes revealIn {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.reveal-symbol { font-size: 2.5rem; margin-bottom: 6px; }
+.reveal-value {
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.reveal-label {
+  font-size: clamp(0.85rem, 2.2vw, 1rem);
+  color: var(--dim);
+}
+
+/* ===== Game Over Overlay ===== */
+.gameover-text {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  font-weight: 900;
+  color: var(--fail);
+  margin-top: 8px;
+  animation: goShake 0.4s ease-out;
+}
+@keyframes goShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* ===== Flash Overlay ===== */
+.flash-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  animation: flashAnim 0.3s ease-out forwards;
+}
+@keyframes flashAnim {
+  0% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+.flash-correct { background: rgba(0,230,118,0.15); }
+.flash-wrong { background: rgba(255,23,68,0.2); }
+
+/* ===== Combo Popup ===== */
+.combo-popup {
+  position: fixed;
+  top: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(255,107,53,0.6);
+  pointer-events: none;
+  z-index: 30;
+  animation: comboUp 0.8s ease-out forwards;
+}
+@keyframes comboUp {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.3); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-40px) scale(0.8); }
+}
+
+/* ===== Result Screen ===== */
+#result-screen {
+  gap: 10px;
+}
+.result-label {
+  color: var(--dim);
+  font-size: 1.1rem;
+}
+.result-score {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: clamp(3.5rem, 15vw, 6rem);
+  font-weight: 900;
+  color: var(--accent2);
+  text-shadow: 0 0 30px rgba(0,229,255,0.4);
+  line-height: 1;
+}
+.result-new-record {
+  font-size: 1.5rem;
+  color: var(--accent);
+  font-weight: 700;
+  animation: recordPulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes recordPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+.result-stats {
+  color: var(--dim);
+  font-size: 0.95rem;
+  text-align: center;
+  line-height: 1.6;
+}
+.result-gameover-label {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--fail);
+  margin-bottom: -4px;
+}
+.result-clear-label {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--success);
+  margin-bottom: -4px;
+}
+.name-input-area {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+#player-name {
+  background: var(--card);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 1rem;
+  color: var(--text);
+  font-family: inherit;
+  width: 160px;
+  outline: none;
+}
+#player-name:focus { border-color: var(--accent2); }
+.save-status {
+  font-size: 0.85rem;
+  min-height: 1.2em;
+  text-align: center;
+}
+.result-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-top: 4px;
+}
+.btn-share {
+  background: #000;
+  color: #fff;
+  border: 2px solid #333;
+  padding: 10px 28px;
+  font-size: 1rem;
+  border-radius: 60px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-share:active { transform: scale(0.95); }
+
+/* ===== Ranking Screen ===== */
+#ranking-screen {
+  gap: 16px;
+  padding: 20px;
+  overflow-y: auto;
+  justify-content: flex-start;
+  padding-top: 40px;
+}
+.ranking-title {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--accent2);
+  margin-bottom: 8px;
+}
+.ranking-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ranking-tab {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: var(--dim);
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.ranking-tab.active {
+  background: var(--accent2);
+  color: #000;
+  border-color: var(--accent2);
+}
+.ranking-list {
+  width: 100%;
+  max-width: 400px;
+}
+.ranking-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--card);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+.rank-num {
+  font-size: 1.4rem;
+  font-weight: 900;
+  min-width: 40px;
+  text-align: center;
+}
+.rank-1 { color: #ffd700; }
+.rank-2 { color: #c0c0c0; }
+.rank-3 { color: #cd7f32; }
+.rank-name { flex: 1; font-weight: 700; }
+.rank-score {
+  color: var(--accent2);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.rank-date {
+  color: var(--dim);
+  font-size: 0.75rem;
+}
+.ranking-loading {
+  text-align: center;
+  color: var(--dim);
+  padding: 40px;
+}
+.ranking-loading .spinner {
+  display: inline-block;
+  width: 24px; height: 24px;
+  border: 3px solid var(--dim);
+  border-top-color: var(--accent2);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Sound Toggle -->
+<button class="sound-toggle" id="sound-toggle" onclick="toggleSound()">🔊</button>
+
+<!-- Title Screen -->
+<div id="title-screen" class="screen active">
+  <div class="game-logo">
+    🃏<br>
+    <span class="logo-high">HiGH</span><span class="logo-and">&</span><span class="logo-low">LOW</span>
+  </div>
+  <div class="game-subtitle">みんなが うろ覚えしてることを<br>当てて当てて当てまくれ！</div>
+  <div class="mode-select">
+    <button class="mode-btn mode-endless" onclick="startGame('endless')">
+      <div class="mode-icon">🔥</div>
+      <div class="mode-name">エンドレス</div>
+      <div class="mode-desc">間違えるまで続く！<br>ハイスコアを目指せ</div>
+    </button>
+    <button class="mode-btn mode-sprint" onclick="startGame('sprint')">
+      <div class="mode-icon">⚡</div>
+      <div class="mode-name">10問スプリント</div>
+      <div class="mode-desc">全問正解の<br>最速タイムを競え！</div>
+    </button>
+  </div>
+  <button class="btn btn-secondary" onclick="showRanking()">🏆 ランキング</button>
+  <div class="best-score-display" id="best-score-display"></div>
+</div>
+
+<!-- Countdown Screen -->
+<div id="countdown-screen" class="screen">
+  <div class="countdown-number" id="countdown-num">3</div>
+</div>
+
+<!-- Game Screen -->
+<div id="game-screen" class="screen">
+  <div class="game-hud">
+    <div class="hud-score" id="hud-score-area">スコア: <span id="hud-score">0</span></div>
+    <div class="hud-combo" id="hud-combo"></div>
+    <div class="hud-progress" id="hud-progress">Q1</div>
+  </div>
+  <div class="timer-bar"><div class="timer-bar-fill" id="timer-bar-fill"></div></div>
+
+  <div class="question-area">
+    <div class="q-category" id="q-category">カテゴリ</div>
+    <div class="q-main-text" id="q-main-text">問題文</div>
+    <div class="q-ref-inline" id="q-ref-inline">100</div>
+    <div class="q-hint" id="q-hint"></div>
+  </div>
+
+  <div class="choices-col">
+    <div class="choice-btn" data-answer="high" id="btn-high">
+      <span class="choice-icon">⬆</span>
+      <span class="choice-label" id="label-high">ハイ</span>
+    </div>
+    <div class="choice-btn" data-answer="same" id="btn-same">
+      <span class="choice-icon">＝</span>
+      <span class="choice-label" id="label-same">同じ</span>
+    </div>
+    <div class="choice-btn" data-answer="low" id="btn-low">
+      <span class="choice-icon">⬇</span>
+      <span class="choice-label" id="label-low">ロー</span>
+    </div>
+  </div>
+</div>
+
+<!-- Result Screen -->
+<div id="result-screen" class="screen">
+  <div id="result-status-label"></div>
+  <div class="result-label" id="result-label">スコア</div>
+  <div class="result-score" id="result-score">0</div>
+  <div id="result-new-record" class="result-new-record" style="display:none">🎉 NEW RECORD!</div>
+  <div class="result-stats" id="result-stats"></div>
+  <div class="name-input-area" id="name-input-area">
+    <input type="text" id="player-name" placeholder="名前を入力" maxlength="10">
+    <button class="btn btn-primary" style="padding:12px 24px;font-size:1rem" id="save-btn" onclick="saveScore()">保存</button>
+  </div>
+  <div class="save-status" id="save-status"></div>
+  <div class="result-buttons">
+    <button class="btn-share" onclick="shareOnX()">𝕏 でシェア</button>
+    <button class="btn btn-primary" id="retry-btn" onclick="retryGame()" style="padding:12px 36px;font-size:1rem">もう一回</button>
+    <button class="btn btn-secondary" onclick="showRanking()">🏆 ランキング</button>
+    <button class="btn btn-secondary" onclick="showTitle()">タイトルへ</button>
+  </div>
+</div>
+
+<!-- Ranking Screen -->
+<div id="ranking-screen" class="screen">
+  <div class="ranking-title">🏆 ランキング</div>
+  <div class="ranking-tabs">
+    <button class="ranking-tab active" id="tab-global" onclick="switchRankingTab('global')">🌍 全員</button>
+    <button class="ranking-tab" id="tab-local" onclick="switchRankingTab('local')">📱 自分</button>
+  </div>
+  <div class="ranking-list" id="ranking-list"></div>
+  <button class="btn btn-secondary" onclick="showTitle()" style="margin-top:16px">戻る</button>
+</div>
+
+<script>
+// ========================================
+// AUDIO ENGINE
+// ========================================
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('sound-toggle').textContent = soundEnabled ? '🔊' : '🔇';
+  if (!soundEnabled) stopBGM();
+}
+
+// ========================================
+// BGM ENGINE (Web Audio API procedural)
+// ========================================
+let bgmNodes = [];
+let bgmInterval = null;
+let bgmPlaying = false;
+
+function startBGM() {
+  if (!audioCtx || !soundEnabled || bgmPlaying) return;
+  bgmPlaying = true;
+
+  // Create a gain node for BGM master volume
+  const masterGain = audioCtx.createGain();
+  masterGain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+  masterGain.connect(audioCtx.destination);
+  bgmNodes.push(masterGain);
+
+  // Bass line pattern (looping)
+  const bassNotes = [130.81, 146.83, 164.81, 146.83, 130.81, 110.00, 123.47, 130.81]; // C3-D3-E3-D3-C3-A2-B2-C3
+  let bassIdx = 0;
+  const bpm = 128;
+  const beatMs = 60000 / bpm;
+
+  function playBeat() {
+    if (!bgmPlaying || !audioCtx) return;
+    const now = audioCtx.currentTime;
+
+    // Bass (sub)
+    const bassOsc = audioCtx.createOscillator();
+    const bassGain = audioCtx.createGain();
+    bassOsc.type = 'sine';
+    bassOsc.frequency.setValueAtTime(bassNotes[bassIdx % bassNotes.length], now);
+    bassGain.gain.setValueAtTime(0.5, now);
+    bassGain.gain.exponentialRampToValueAtTime(0.01, now + beatMs / 1000 * 0.9);
+    bassOsc.connect(bassGain).connect(masterGain);
+    bassOsc.start(now);
+    bassOsc.stop(now + beatMs / 1000);
+
+    // Hi-hat (noise burst) on every beat
+    const bufferSize = audioCtx.sampleRate * 0.03;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noiseSrc = audioCtx.createBufferSource();
+    noiseSrc.buffer = noiseBuffer;
+    const hihatGain = audioCtx.createGain();
+    const hihatFilter = audioCtx.createBiquadFilter();
+    hihatFilter.type = 'highpass';
+    hihatFilter.frequency.setValueAtTime(8000, now);
+    hihatGain.gain.setValueAtTime(0.3, now);
+    hihatGain.gain.exponentialRampToValueAtTime(0.01, now + 0.03);
+    noiseSrc.connect(hihatFilter).connect(hihatGain).connect(masterGain);
+    noiseSrc.start(now);
+
+    // Chord pad every 4 beats
+    if (bassIdx % 4 === 0) {
+      const chordFreqs = bassIdx % 8 < 4
+        ? [261.63, 329.63, 392.00]  // C major
+        : [220.00, 277.18, 329.63]; // A minor
+      chordFreqs.forEach(freq => {
+        const padOsc = audioCtx.createOscillator();
+        const padGain = audioCtx.createGain();
+        padOsc.type = 'triangle';
+        padOsc.frequency.setValueAtTime(freq, now);
+        padGain.gain.setValueAtTime(0.15, now);
+        padGain.gain.setValueAtTime(0.15, now + beatMs * 3.5 / 1000);
+        padGain.gain.exponentialRampToValueAtTime(0.001, now + beatMs * 4 / 1000);
+        padOsc.connect(padGain).connect(masterGain);
+        padOsc.start(now);
+        padOsc.stop(now + beatMs * 4 / 1000);
+      });
+    }
+
+    // Kick on beats 0,2 (every 2 beats)
+    if (bassIdx % 2 === 0) {
+      const kickOsc = audioCtx.createOscillator();
+      const kickGain = audioCtx.createGain();
+      kickOsc.type = 'sine';
+      kickOsc.frequency.setValueAtTime(150, now);
+      kickOsc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+      kickGain.gain.setValueAtTime(0.6, now);
+      kickGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+      kickOsc.connect(kickGain).connect(masterGain);
+      kickOsc.start(now);
+      kickOsc.stop(now + 0.15);
+    }
+
+    bassIdx++;
+  }
+
+  playBeat();
+  bgmInterval = setInterval(playBeat, beatMs);
+}
+
+function stopBGM() {
+  bgmPlaying = false;
+  if (bgmInterval) {
+    clearInterval(bgmInterval);
+    bgmInterval = null;
+  }
+  bgmNodes.forEach(n => { try { n.disconnect(); } catch(e) {} });
+  bgmNodes = [];
+}
+
+function playSE(type) {
+  if (!soundEnabled || !audioCtx) return;
+  const now = audioCtx.currentTime;
+
+  if (type === 'correct') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(660, now);
+    osc.frequency.linearRampToValueAtTime(880, now + 0.08);
+    osc.frequency.linearRampToValueAtTime(1100, now + 0.15);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.25);
+  } else if (type === 'wrong') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.35);
+  } else if (type === 'countdown') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523, now);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'go') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1047, now);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.3);
+  } else if (type === 'combo') {
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.06);
+      gain.gain.setValueAtTime(0.12, now + i * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.15);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + i * 0.06); osc.stop(now + i * 0.06 + 0.15);
+    });
+  } else if (type === 'newrecord') {
+    [523, 659, 784, 1047, 784, 1047, 1319].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(freq, now + i * 0.1);
+      gain.gain.setValueAtTime(0.18, now + i * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.25);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + i * 0.1); osc.stop(now + i * 0.1 + 0.25);
+    });
+  } else if (type === 'click') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, now);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.06);
+  } else if (type === 'reveal') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.linearRampToValueAtTime(660, now + 0.15);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.2);
+  } else if (type === 'gameover') {
+    [300, 250, 200, 150].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now + i * 0.15);
+      gain.gain.setValueAtTime(0.15, now + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.2);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + i * 0.15); osc.stop(now + i * 0.15 + 0.2);
+    });
+  }
+}
+
+// ========================================
+// COMPARISON LABELS
+// ========================================
+const COMP_LABELS = {
+  year:  { high: '新しい', low: '古い', same: '同じ年' },
+  tall:  { high: '高い', low: '低い', same: '同じ' },
+  long:  { high: '長い', low: '短い', same: '同じ' },
+  big:   { high: '大きい', low: '小さい', same: '同じ' },
+  old:   { high: '年上', low: '年下', same: '同い年' },
+  heavy: { high: '重い', low: '軽い', same: '同じ' },
+  fast:  { high: '速い', low: '遅い', same: '同じ' },
+  hot:   { high: '高い', low: '低い', same: '同じ' },
+  many:  { high: '多い', low: '少ない', same: '同じ' },
+  wide:  { high: '広い', low: '狭い', same: '同じ' },
+};
+
+// ========================================
+// QUESTION DATABASE
+// ========================================
+const questions = [
+  // === 歴史・将軍 ===
+  { category: '🏯 歴史', question: '徳川家康が征夷大将軍になった年は？', refName: '関ヶ原の戦い', refValue: 1600, askLabel: '家康の将軍就任', askValue: 1603, hint: '天下分け目の戦いの後', unit: '年', comp: 'year' },
+  { category: '🏯 歴史', question: '徳巜綱吉（5代）の将軍就任は？', refName: '吉宗の就任', refValue: 1716, askLabel: '綱吉の就任', askValue: 1680, hint: '生類恐みの令 vs 享保の改革', unit: '年', comp: 'year' },
+  { category: '🏯 歴史', question: '織田信長の本能寺の変は何年？', refName: '長篠の戦い', refValue: 1575, askLabel: '本能寺の変', askValue: 1582, hint: '戦国時代のクライマックス', unit: '年', comp: 'year' },
+  { category: '🏯 歴史', question: '豊膣秀吉の天下統一は何年？', refName: '本能寺の変', refValue: 1582, askLabel: '天下統一', askValue: 1590, hint: '小田原征伐で完了', unit: '年', comp: 'year' },
+  { category: '🏯 歴史', question: '参勤交代が制度化されたのは？', refName: '大坂夏の陣', refValue: 1615, askLabel: '参勤交代', askValue: 1635, hint: '3代将軍家光の時代', unit: '年', comp: 'year' },
+  { category: '🏯 歴史', question: 'ペリー来航は何年？', refName: 'アヘン戦争', refValue: 1840, askLabel: 'ペリー来航', askValue: 1853, hint: '「太平の眠りを覚ます...」', unit: '年', comp: 'year' },
+
+  // === スポーツ ===
+  { category: '⚽ スポーツ', question: 'サッカーのゴールの横幅は？', refName: 'フットサルゴール', refValue: 3, askLabel: 'サッカーゴール', askValue: 7.32, hint: '高さは2.44m', unit: 'm', comp: 'wide' },
+  { category: '🏀 スポーツ', question: 'バスケのリング直径は？', refName: 'バスケボール直径', refValue: 24.6, askLabel: 'リングの直径', askValue: 45, hint: 'ボールが2個入るサイズ？', unit: 'cm', comp: 'big' },
+  { category: '🏀 スポーツ', question: 'バスケットのゴールの高さは？', refName: 'バレーネット(男子)', refValue: 2.43, askLabel: 'バスケゴール', askValue: 3.05, hint: '約10フィート', unit: 'm', comp: 'tall' },
+  { category: '⚾ スポーツ', question: '野球のマウンドまでの距離は？', refName: 'ボウリングレーン', refValue: 18.29, askLabel: 'マウンドの距離', askValue: 18.44, hint: '60フィート6インチ', unit: 'm', comp: 'long' },
+  { category: '⚾ スポーツ', question: '野球の塁間の距離は？', refName: 'テニスコート(縦)', refValue: 23.77, askLabel: '塁間の距離', askValue: 27.431, hint: '90フィート', unit: 'm', comp: 'long' },
+  { category: '🏐 スポーツ', question: 'バレーボールのネットの高さ（男子）は？', refName: 'テニスネット(端)', refValue: 1.07, askLabel: 'バレーネット(男子)', askValue: 2.43, hint: '女子は2.24m', unit: 'm', comp: 'tall' },
+  { category: '🎾 スポーツ', question: 'テニスのネットの高さ（中央）は？', refName: 'バドミントンネット', refValue: 1.55, askLabel: 'テニスネット中央', askValue: 0.914, hint: '3フィート', unit: 'm', comp: 'tall' },
+  { category: '🏊 スポーツ', question: 'オリンピックの競泳プールは何m？', refName: '短水路プール', refValue: 25, askLabel: '五輪プール', askValue: 50, hint: '短水路は25m', unit: 'm', comp: 'long' },
+  { category: '🥊 スポーツ', question: 'ボクシングのリング一辺は？', refName: '相撲の土俵(直径)', refValue: 4.55, askLabel: 'ボクシングリング', askValue: 6.1, hint: '20フィート四方が標準', unit: 'm', comp: 'long' },
+  { category: '⚽ スポーツ', question: 'サッカーW杯の第1回大会は何年？', refName: '近代五輪 第1回', refValue: 1896, askLabel: '第1回W杯', askValue: 1930, hint: '開催国はウルグアイ', unit: '年', comp: 'year' },
+  { category: '🏃 スポーツ', question: 'マラソンの距離は？', refName: '箱根駅伝1区', refValue: 21.3, askLabel: 'フルマラソン', askValue: 42.195, hint: '約26マイル', unit: 'km', comp: 'long' },
+
+  // === アニメ・映画の公開年 ===
+  { category: '🎬 アニメ', question: '「千と千尋の神隠し」の公開年は？', refName: 'もののけ姫', refValue: 1997, askLabel: '千と千尋', askValue: 2001, hint: '宮崎駿監督作品', unit: '年', comp: 'year' },
+  { category: '🎬 アニメ', question: '「もののけ姫」の公開年は？', refName: 'ラピュタ', refValue: 1986, askLabel: 'もののけ姫', askValue: 1997, hint: '宮崎駿監督作品', unit: '年', comp: 'year' },
+  { category: '🎬 アニメ', question: '「となりのトトロ」の公開年は？', refName: 'ナウシカ', refValue: 1984, askLabel: 'トトロ', askValue: 1988, hint: '火垂るの墓と同時上映', unit: '年', comp: 'year' },
+  { category: '🎬 アニメ', question: '「エヴァンゲリオン」TV放送開始年は？', refName: 'セーラームーン', refValue: 1992, askLabel: 'エヴァ TV版', askValue: 1995, hint: '碇シンジ、14歳', unit: '年', comp: 'year' },
+  { category: '🎬 アニメ', question: '「鬼滅の刃」TVアニメ放送開始年は？', refName: '呪術廻戦', refValue: 2020, askLabel: '鬼滅の刃 TV', askValue: 2019, hint: '竈門炭治郎が主人公', unit: '年', comp: 'year' },
+  { category: '🎬 アニメ', question: '「呪術廻戦」TVアニメ放送開始年は？', refName: 'チェンソーマン', refValue: 2022, askLabel: '呪術廻戦 TV', askValue: 2020, hint: '虎杖悠仁が主人公', unit: '年', comp: 'year' },
+  { category: '🎬 映画', question: '「君の名は。」の公開年は？', refName: 'シン・ゴジラ', refValue: 2016, askLabel: '君の名は。', askValue: 2016, hint: '新海誠監督の大ヒット作', unit: '年', comp: 'year' },
+  { category: '🎬 映画', question: '「タイタニック」の公開年は？', refName: 'ジュラシック・パーク', refValue: 1993, askLabel: 'タイタニック', askValue: 1997, hint: 'レオナルド・ディカプリオ主演', unit: '年', comp: 'year' },
+  { category: '🎬 映画', question: '映画「のび太の恐竜」第1作の公開年は？', refName: 'ドラえもん連載開始', refValue: 1970, askLabel: 'のび太の恐竜', askValue: 1980, hint: 'ドラえもん映画シリーズ第1弾', unit: '年', comp: 'year' },
+  { category: '🎬 アニメ', question: '「ONE PIECE」TVアニメ放送開始年は？', refName: 'NARUTO', refValue: 2002, askLabel: 'ワンピース TV', askValue: 1999, hint: '海賊王に俺はなる！', unit: '年', comp: 'year' },
+  { category: '🎬 アニメ', question: '「NARUTO」TVアニメ放送開始年は？', refName: 'BLEACH', refValue: 2004, askLabel: 'ナルト TV', askValue: 2002, hint: '火影を目指す忍者の物語', unit: '年', comp: 'year' },
+  { category: '🎬 アニメ', question: '「ドラゴンボール」TVアニメ放送開始年は？', refName: '北斗の拳', refValue: 1984, askLabel: 'ドラゴンボール', askValue: 1986, hint: '鳥山明先生の代表作', unit: '年', comp: 'year' },
+  { category: '🎬 アニメ', question: '「スラムダンク」TVアニメ放送開始年は？', refName: '幽☆遊☆白書', refValue: 1992, askLabel: 'スラムダンク', askValue: 1993, hint: '天才ですから', unit: '年', comp: 'year' },
+
+  // === キャラクター身長・年齢 ===
+  { category: '📏 キャラ身長', question: '「ONE PIECE」ルフィの身長は？', refName: 'ナルト', refValue: 180, askLabel: 'ルフィ', askValue: 174, hint: 'ゴムゴムの実の能力者', unit: 'cm', comp: 'tall' },
+  { category: '📏 キャラ身長', question: '「ONE PIECE」ゾロの身長は？', refName: '煉獄杏寿郎', refValue: 177, askLabel: 'ゾロ', askValue: 181, hint: '三刀流の剣士', unit: 'cm', comp: 'tall' },
+  { category: '📏 キャラ身長', question: '「ドラゴンボール」悟空の身長は？', refName: 'ルフィ', refValue: 174, askLabel: '悟空', askValue: 175, hint: 'サイヤ人の戦士', unit: 'cm', comp: 'tall' },
+  { category: '📏 キャラ身長', question: '「鬼滅の刃」竈門炭治郎の身長は？', refName: '日向翔陽', refValue: 164, askLabel: '炭治郎', askValue: 165, hint: '水の呼吸の使い手', unit: 'cm', comp: 'tall' },
+  { category: '📏 キャラ身長', question: '「進撃の巨人」リヴァイ兵長の身長は？', refName: 'ベジータ', refValue: 164, askLabel: 'リヴァイ', askValue: 160, hint: '人類最強の兵士', unit: 'cm', comp: 'tall' },
+  { category: '📏 キャラ身長', question: '「名探偵コナン」毛利蘭の身長は？', refName: '工藤新一', refValue: 174, askLabel: '毛利蘭', askValue: 164, hint: '空手の達人', unit: 'cm', comp: 'tall' },
+  { category: '🎂 キャラ年齢', question: '「サザエさん」のサザエさんは何歳？', refName: '野原みさえ', refValue: 29, askLabel: 'サザエさん', askValue: 24, hint: 'フグ田サザエ', unit: '歳', comp: 'old' },
+  { category: '🎂 キャラ年齢', question: '「サザエさん」の波平さんは何歳？', refName: 'マスオさん', refValue: 28, askLabel: '波平', askValue: 54, hint: '磯野家の大黒柱', unit: '歳', comp: 'old' },
+  { category: '🎂 キャラ年齢', question: '「クレヨンしんちゃん」ひろしは何歳？', refName: 'サザエさん', refValue: 24, askLabel: 'ひろし', askValue: 35, hint: '野原家の大黒柱', unit: '歳', comp: 'old' },
+  { category: '📏 キャラ体重', question: '「ドラえもん」ドラえもんの体重は？', refName: 'ドラミ', refValue: 91, askLabel: 'ドラえもん', askValue: 129.3, hint: '22世紀から来たネコ型ロボット', unit: 'kg', comp: 'heavy' },
+
+  // === 一般教養・雑学 ===
+  { category: '🌍 雑学', question: '富士山の高さは？', refName: '北岳', refValue: 3193, askLabel: '富士山', askValue: 3776, hint: '日本一高い山 vs 日本二位', unit: 'm', comp: 'tall' },
+  { category: '🌍 雑学', question: '東京タワーの高さは？', refName: 'エッフェル塔', refValue: 330, askLabel: '東京タワー', askValue: 333, hint: '1958年完成', unit: 'm', comp: 'tall' },
+  { category: '🌍 雑学', question: '東京スカイツリーの高さは？', refName: '東京タワー', refValue: 333, askLabel: 'スカイツリー', askValue: 634, hint: '武蔵（ムサシ）にかけた語呂', unit: 'm', comp: 'tall' },
+  { category: '🌍 雑学', question: 'エベレストの高さは？', refName: '富士山', refValue: 3776, askLabel: 'エベレスト', askValue: 8849, hint: '世界最高峰', unit: 'm', comp: 'tall' },
+  { category: '🌍 雑学', question: '月までの平均距離は？', refName: '地球一周', refValue: 4, askLabel: '月までの距離', askValue: 38, hint: '光で約1.3秒', unit: '万km', comp: 'long' },
+  { category: '🌍 雑学', question: '太陽の直径は地球の何倍？', refName: '木星の直径', refValue: 11, askLabel: '太陽の直径', askValue: 109, hint: '太陽系で最も大きい天体', unit: '倍', comp: 'big' },
+  { category: '🌍 雑学', question: '光の速さは秒速約何万km？', refName: '音速', refValue: 0.00034, askLabel: '光速', askValue: 30, hint: '宇宙最速', unit: '万km/s', comp: 'fast' },
+  { category: '🌍 雑学', question: '人体の骨の数は？', refName: '永久歯の数', refValue: 32, askLabel: '骨の数', askValue: 206, hint: '成人の場合', unit: '本', comp: 'many' },
+  { category: '🌍 雑学', question: '人間の血液は体重の約何%？', refName: '水分の割合', refValue: 60, askLabel: '血液の割合', askValue: 8, hint: '体重60kgなら約5リットル', unit: '%', comp: 'many' },
+  { category: '🌍 雑学', question: '水の沸点（標準気圧）は？', refName: 'エタノールの沸点', refValue: 78, askLabel: '水の沸点', askValue: 100, hint: '1気圧での温度', unit: '℃', comp: 'hot' },
+  { category: '🌍 雑学', question: '日本の都道府県の数は？', refName: 'アメリカの州', refValue: 50, askLabel: '都道府県', askValue: 47, hint: '1都1道2府43県', unit: '', comp: 'many' },
+  { category: '🌍 雑学', question: 'トランプ1組の枚数は（ジョーカー除く）？', refName: '花札', refValue: 48, askLabel: 'トランプ', askValue: 52, hint: '4スーツ×13枚', unit: '枚', comp: 'many' },
+
+  // === 芸能 ===
+  { category: '🎤 芸能', question: '「笑点」の放送開始年は？', refName: 'サザエさん', refValue: 1969, askLabel: '笑点', askValue: 1966, hint: '日テレの長寿番組', unit: '年', comp: 'year' },
+  { category: '🎤 芸能', question: '「サザエさん」TVアニメ放送開始年は？', refName: 'ドラえもん(TV)', refValue: 1979, askLabel: 'サザエさん', askValue: 1969, hint: 'フグテレビの国民的アニメ', unit: '年', comp: 'year' },
+  { category: '🎤 芸能', question: '「紅白歌合戦」の第1回放送年は？', refName: '笑点', refValue: 1966, askLabel: '第1回紅白', askValue: 1951, hint: 'NHKの年末戒例番組', unit: '年', comp: 'year' },
+
+  // === 食べ物・生活 ===
+  { category: '🍔 食べ物', question: 'カップヌードルの発売年は？', refName: 'チキンラーメン', refValue: 1958, askLabel: 'カップヌードル', askValue: 1971, hint: '日清食品', unit: '年', comp: 'year' },
+  { category: '🍔 食べ物', question: 'コカ・コーラが日本で発売された年は？', refName: 'カルピス発売', refValue: 1919, askLabel: 'コカ・コーラ日本', askValue: 1957, hint: 'アメリカでの発売は1886年', unit: '年', comp: 'year' },
+  { category: '🍔 食べ物', question: 'ポッキーの発売年は？', refName: 'プリッツ', refValue: 1963, askLabel: 'ポッキー', askValue: 1966, hint: '汞崎グリコ', unit: '年', comp: 'year' },
+  { category: '🍔 食べ物', question: 'バナナ1本のカロリーは約何kcal？', refName: 'りんご1個', refValue: 54, askLabel: 'バナナ', askValue: 86, hint: '手軽なエネルギー補給', unit: 'kcal', comp: 'many' },
+
+  // === ゲーム ===
+  { category: '🎮 ゲーム', question: '初代ファミコンの発売年は？', refName: 'ゲームボーイ', refValue: 1989, askLabel: 'ファミコン', askValue: 1983, hint: '任天堂の家庭用ゲーム機', unit: '年', comp: 'year' },
+  { category: '🎮 ゲーム', question: '初代PlayStation の発売年は？', refName: 'NINTENDO64', refValue: 1996, askLabel: 'PS1', askValue: 1994, hint: 'ソニーの家庭用ゲーム機', unit: '年', comp: 'year' },
+  { category: '🎮 ゲーム', question: 'Nintendo Switch の発売年は？', refName: 'PS4', refValue: 2014, askLabel: 'Switch', askValue: 2017, hint: '携帯と据え置きの融合', unit: '年', comp: 'year' },
+  { category: '🎮 ゲーム', question: '「スーパーマリオブラザーズ」初代の発売年は？', refName: 'ドラクエ1', refValue: 1986, askLabel: 'マリオ初代', askValue: 1985, hint: 'ファミコンの名作', unit: '年', comp: 'year' },
+  { category: '🎮 ゲーム', question: '「ポケモン 赤・緑」の発売年は？', refName: 'マリオ64', refValue: 1996, askLabel: 'ポケモン赤緑', askValue: 1996, hint: 'ゲームボーイのソフト', unit: '年', comp: 'year' },
+  { category: '🎮 ゲーム', question: '「マインクラフト」の正式リリース年は？', refName: 'フォートナイト', refValue: 2017, askLabel: 'マイクラ', askValue: 2011, hint: 'Mojang Studios', unit: '年', comp: 'year' },
+
+  // === 地理 ===
+  { category: '🗺️ 地理', question: '日本の人口は約何億人？', refName: 'ドイツの人口', refValue: 0.83, askLabel: '日本の人口', askValue: 1.24, hint: '減少傾向', unit: '億人', comp: 'many' },
+  { category: '🗺️ 地理', question: '地球の赤道一周は約何万km？', refName: '地球の直径', refValue: 1.27, askLabel: '赤道一周', askValue: 4, hint: '約4万km', unit: '万km', comp: 'long' },
+  { category: '🗺️ 地理', question: '琵琶湖の面積は？', refName: '淡路島', refValue: 592, askLabel: '琵琶湖', askValue: 670, hint: '日本最大の湖', unit: 'km²', comp: 'wide' },
+  { category: '🗺️ 地理', question: '北海道の面積は約何万km²？', refName: '九州', refValue: 3.6, askLabel: '北海道', askValue: 8.3, hint: '日本最大の都道府県', unit: '万km²', comp: 'wide' },
+];
+
+// ========================================
+// GAME STATE
+// ========================================
+const SPRINT_QUESTIONS = 10;
+let gameMode = 'endless'; // 'endless' or 'sprint'
+let score = 0, combo = 0, maxCombo = 0, correctCount = 0, questionNum = 0;
+let currentCorrectAnswer = null;
+let currentQuestion = null;
+let questionTimeout = null;
+let timerInterval = null;
+let gameActive = false;
+let usedQuestionIndices = [];
+let questionStartTime = 0;  // ms timestamp when question appeared
+let currentTimeLimit = 0;   // ms time limit for current question
+let sprintTotalTime = 0;    // accumulated time for sprint mode (ms)
+let gameStartTimestamp = 0;  // when the game started
+
+// ========================================
+// SCREENS
+// ========================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showTitle() {
+  stopBGM();
+  showScreen('title-screen');
+  const bestEndless = getBestScore('endless');
+  const bestSprint = getBestScore('sprint');
+  const parts = [];
+  if (bestEndless > 0) parts.push(`🔥 エンドレス: ${bestEndless}pt`);
+  if (bestSprint > 0) parts.push(`⚡ スプリント: ${bestSprint}pt`);
+  document.getElementById('best-score-display').textContent = parts.join('　');
+}
+
+// ========================================
+// GAME LOGIC
+// ========================================
+function startGame(mode) {
+  initAudio();
+  gameMode = mode;
+  score = 0; combo = 0; maxCombo = 0; correctCount = 0; questionNum = 0;
+  sprintTotalTime = 0;
+  gameActive = false;
+  usedQuestionIndices = [];
+  showScreen('countdown-screen');
+  doCountdown(3);
+}
+
+function retryGame() {
+  startGame(gameMode);
+}
+
+function doCountdown(n) {
+  if (n <= 0) {
+    playSE('go');
+    gameActive = true;
+    gameStartTimestamp = Date.now();
+    showScreen('game-screen');
+    startBGM();
+    nextQuestion();
+    return;
+  }
+  const el = document.getElementById('countdown-num');
+  el.textContent = n;
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = 'countPulse 0.6s ease-out';
+  playSE('countdown');
+  setTimeout(() => doCountdown(n - 1), 800);
+}
+
+function pickQuestion() {
+  const available = [];
+  for (let i = 0; i < questions.length; i++) {
+    if (!usedQuestionIndices.includes(i)) available.push(i);
+  }
+  if (available.length === 0) {
+    usedQuestionIndices = [];
+    for (let i = 0; i < questions.length; i++) available.push(i);
+  }
+  const idx = available[Math.floor(Math.random() * available.length)];
+  usedQuestionIndices.push(idx);
+  return questions[idx];
+}
+
+function getTimeLimit() {
+  if (gameMode === 'sprint') {
+    return 8000; // constant 8 seconds
+  }
+  // Endless: start at 10s, decrease to 5s over 20 questions
+  const minTime = 5000;
+  const maxTime = 10000;
+  const decay = (maxTime - minTime) / 20;
+  return Math.max(minTime, maxTime - questionNum * decay);
+}
+
+function nextQuestion() {
+  if (!gameActive) return;
+
+  // Sprint mode: check if all questions answered
+  if (gameMode === 'sprint' && questionNum >= SPRINT_QUESTIONS) {
+    gameActive = false;
+    setTimeout(() => showResult(true), 300);
+    return;
+  }
+
+  questionNum++;
+  const q = pickQuestion();
+  currentQuestion = q;
+
+  // Determine correct answer
+  if (q.askValue > q.refValue) {
+    currentCorrectAnswer = 'high';
+  } else if (q.askValue < q.refValue) {
+    currentCorrectAnswer = 'low';
+  } else {
+    currentCorrectAnswer = 'same';
+  }
+
+  // Update button labels based on comparison type
+  const labels = COMP_LABELS[q.comp] || { high: 'ハイ', low: 'ロー', same: '同じ' };
+  document.getElementById('label-high').textContent = labels.high;
+  document.getElementById('label-same').textContent = labels.same;
+  document.getElementById('label-low').textContent = labels.low;
+
+  // Update HUD
+  if (gameMode === 'endless') {
+    document.getElementById('hud-score-area').innerHTML = `スコア: <span id="hud-score">${score}</span>`;
+    document.getElementById('hud-progress').textContent = `Q${questionNum}`;
+  } else {
+    document.getElementById('hud-score-area').innerHTML = `スコア: <span id="hud-score">${score}</span>`;
+    document.getElementById('hud-progress').textContent = `Q${questionNum} / ${SPRINT_QUESTIONS}`;
+  }
+  document.getElementById('hud-combo').textContent = combo > 1 ? `🔥 ${combo}コンボ` : '';
+
+  // Update question display
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-main-text').textContent = q.question;
+  const refDisplay = q.refName + '（' + q.refValue + (q.unit || '') + '）より…';
+  document.getElementById('q-ref-inline').textContent = refDisplay;
+  document.getElementById('q-hint').textContent = '💡 ' + q.hint;
+
+  // Reset buttons
+  ['high', 'same', 'low'].forEach(a => {
+    const btn = document.getElementById('btn-' + a);
+    btn.classList.remove('correct', 'wrong');
+  });
+
+  // Remove any old answer reveal or gameover text
+  document.querySelectorAll('.answer-reveal').forEach(e => e.remove());
+  document.querySelectorAll('.gameover-text').forEach(e => e.remove());
+
+  // Timer
+  const timeLimit = getTimeLimit();
+  currentTimeLimit = timeLimit;
+  let timeLeft = timeLimit;
+  const timerFill = document.getElementById('timer-bar-fill');
+  timerFill.style.width = '100%';
+  timerFill.style.background = 'var(--accent2)';
+
+  clearInterval(timerInterval);
+  clearTimeout(questionTimeout);
+
+  questionStartTime = Date.now();
+
+  timerInterval = setInterval(() => {
+    timeLeft -= 50;
+    const pct = Math.max(0, timeLeft / timeLimit * 100);
+    timerFill.style.width = pct + '%';
+    if (pct < 30) timerFill.style.background = 'var(--fail)';
+    else if (pct < 60) timerFill.style.background = 'var(--accent)';
+    else timerFill.style.background = 'var(--accent2)';
+  }, 50);
+
+  questionTimeout = setTimeout(() => onTimeout(), timeLimit);
+}
+
+function handleAnswer(answer) {
+  if (!gameActive || !currentCorrectAnswer) return;
+  clearTimeout(questionTimeout);
+  clearInterval(timerInterval);
+
+  const isCorrect = answer === currentCorrectAnswer;
+  const btn = document.getElementById('btn-' + answer);
+  const q = currentQuestion;
+  const answerTime = Date.now() - questionStartTime; // ms taken to answer
+
+  if (isCorrect) {
+    correctCount++;
+    combo++;
+    if (combo > maxCombo) maxCombo = combo;
+
+    // Calculate score based on mode
+    if (gameMode === 'endless') {
+      const baseScore = 100;
+      const timeBonus = Math.floor((1 - answerTime / currentTimeLimit) * 100);
+      const comboBonus = Math.min(combo * 15, 150);
+      score += baseScore + Math.max(0, timeBonus) + comboBonus;
+    } else {
+      // Sprint: score = remaining time points (max 1000 per question)
+      const timeScore = Math.floor((1 - answerTime / currentTimeLimit) * 1000);
+      score += Math.max(0, timeScore);
+      sprintTotalTime += answerTime;
+    }
+
+    btn.classList.add('correct');
+    showFlash('correct');
+    playSE('correct');
+    showAnswerReveal(q, true);
+
+    if (combo > 0 && combo % 5 === 0) {
+      showComboPopup(`${combo}コンボ!`);
+      playSE('combo');
+    } else if (combo === 3) {
+      showComboPopup('🔥');
+      playSE('combo');
+    }
+
+    currentCorrectAnswer = null;
+    setTimeout(() => nextQuestion(), 1200);
+  } else {
+    // GAME OVER
+    gameActive = false;
+    combo = 0;
+    btn.classList.add('wrong');
+    document.getElementById('btn-' + currentCorrectAnswer).classList.add('correct');
+    showFlash('wrong');
+    playSE('wrong');
+    showAnswerReveal(q, false);
+
+    // Show game over text on game screen
+    const goDiv = document.createElement('div');
+    goDiv.className = 'gameover-text';
+    goDiv.textContent = 'GAME OVER';
+    document.getElementById('game-screen').appendChild(goDiv);
+    playSE('gameover');
+
+    currentCorrectAnswer = null;
+    setTimeout(() => showResult(false), 2000);
+  }
+}
+
+function onTimeout() {
+  clearInterval(timerInterval);
+  // GAME OVER on timeout
+  gameActive = false;
+  combo = 0;
+
+  showFlash('wrong');
+  playSE('wrong');
+
+  const q = currentQuestion;
+  document.getElementById('btn-' + currentCorrectAnswer).classList.add('correct');
+  showAnswerReveal(q, false);
+
+  const goDiv = document.createElement('div');
+  goDiv.className = 'gameover-text';
+  goDiv.textContent = 'TIME UP!';
+  document.getElementById('game-screen').appendChild(goDiv);
+  playSE('gameover');
+
+  currentCorrectAnswer = null;
+  setTimeout(() => showResult(false), 2000);
+}
+
+function showAnswerReveal(q, isCorrect) {
+  const div = document.createElement('div');
+  div.className = 'answer-reveal' + (isCorrect ? '' : ' wrong-reveal');
+  const symbol = isCorrect ? '⭕' : '❌';
+  div.innerHTML = `<div class="reveal-symbol">${symbol}</div><div class="reveal-value">${q.askLabel}: ${q.askValue}${q.unit || ''}</div><div class="reveal-label">${q.refName}: ${q.refValue}${q.unit || ''}</div>`;
+  document.getElementById('game-screen').appendChild(div);
+  playSE('reveal');
+}
+
+function showFlash(type) {
+  const div = document.createElement('div');
+  div.className = `flash-overlay flash-${type}`;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 300);
+}
+
+function showComboPopup(text) {
+  const div = document.createElement('div');
+  div.className = 'combo-popup';
+  div.textContent = text;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 800);
+}
+
+// ========================================
+// RESULTS
+// ========================================
+function showResult(cleared) {
+  stopBGM();
+  showScreen('result-screen');
+
+  const statusLabel = document.getElementById('result-status-label');
+  if (gameMode === 'sprint' && cleared) {
+    statusLabel.className = 'result-clear-label';
+    statusLabel.textContent = '🎉 全問正解！';
+  } else if (!cleared) {
+    statusLabel.className = 'result-gameover-label';
+    statusLabel.textContent = 'GAME OVER';
+  } else {
+    statusLabel.className = '';
+    statusLabel.textContent = '';
+  }
+
+  document.getElementById('result-label').textContent = 'スコア';
+  document.getElementById('result-score').textContent = score;
+
+  // Stats
+  let statsHtml = '';
+  if (gameMode === 'endless') {
+    statsHtml = `正解数: ${correctCount}<br>最大コンボ: ${maxCombo}`;
+  } else {
+    const totalMs = cleared ? sprintTotalTime : (Date.now() - gameStartTimestamp);
+    const totalSec = (totalMs / 1000).toFixed(2);
+    if (cleared) {
+      statsHtml = `クリアタイム: ${totalSec}秒<br>最大コンボ: ${maxCombo}`;
+    } else {
+      statsHtml = `到達: Q${correctCount + 1} / ${SPRINT_QUESTIONS}<br>正解数: ${correctCount}<br>最大コンボ: ${maxCombo}`;
+    }
+  }
+  document.getElementById('result-stats').innerHTML = statsHtml;
+
+  const best = getBestScore(gameMode);
+  if (score > best && score > 0) {
+    document.getElementById('result-new-record').style.display = 'block';
+    playSE('newrecord');
+  } else {
+    document.getElementById('result-new-record').style.display = 'none';
+  }
+
+  const lastName = localStorage.getItem('halLastName') || '';
+  document.getElementById('player-name').value = lastName;
+  document.getElementById('save-status').textContent = '';
+  document.getElementById('save-btn').disabled = false;
+  document.getElementById('save-btn').textContent = '保存';
+}
+
+// ========================================
+// X SHARE
+// ========================================
+function shareOnX() {
+  let text;
+  const modeLabel = gameMode === 'endless' ? 'エンドレスモード' : '10問スプリント';
+  if (gameMode === 'endless') {
+    text = `🃏 HiGH&LOW クイズ【${modeLabel}】で ${score}点 獲得！\n正解数: ${correctCount} | 最大コンボ: ${maxCombo}\nみんなうろ覚えしてることをクイズで当てよう！\n`;
+  } else {
+    text = `🃏 HiGH&LOW クイズ【${modeLabel}】で ${score}点 獲得！\n正解数: ${correctCount}/${SPRINT_QUESTIONS} | 最大コンボ: ${maxCombo}\nみんなうろ覚えしてることをクイズで当てよう！\n`;
+  }
+  const url = 'https://hitokoto-dev.github.io/high-and-low/';
+  const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  window.open(shareUrl, '_blank');
+}
+
+// ========================================
+// SUPABASE
+// ========================================
+const SUPABASE_URL = 'https://mvnhojzeshbquobffkmq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bmhvanplc2hicXVvYmZma21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MjQ4NzgsImV4cCI6MjA4ODAwMDg3OH0.kJNoHqJpmC5PLuojOGrnmWBT4TMZG5HbIv7bFY1D3QI';
+
+async function supabaseFetch(path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || '',
+      ...options.headers,
+    },
+  });
+  if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ========================================
+// RANKING
+// ========================================
+let currentRankingTab = 'global';
+
+function getLocalRankings() {
+  try { return JSON.parse(localStorage.getItem('halRankings') || '[]'); }
+  catch { return []; }
+}
+
+function getBestScore(mode) {
+  const rankings = getLocalRankings();
+  const filtered = mode ? rankings.filter(r => r.mode === mode) : rankings;
+  return filtered.length > 0 ? Math.max(...filtered.map(r => r.score)) : 0;
+}
+
+async function saveScore() {
+  initAudio();
+  playSE('click');
+  const name = document.getElementById('player-name').value.trim() || 'プレイヤー';
+  localStorage.setItem('halLastName', name);
+
+  const saveBtn = document.getElementById('save-btn');
+  const statusEl = document.getElementById('save-status');
+  saveBtn.disabled = true;
+  saveBtn.textContent = '保存中...';
+  statusEl.textContent = '';
+
+  // localStorage
+  const rankings = getLocalRankings();
+  rankings.push({
+    name, score, correct: correctCount, maxCombo,
+    mode: gameMode,
+    date: new Date().toLocaleDateString('ja-JP'),
+  });
+  rankings.sort((a, b) => b.score - a.score);
+  if (rankings.length > 50) rankings.length = 50;
+  localStorage.setItem('halRankings', JSON.stringify(rankings));
+
+  // Supabase
+  try {
+    await supabaseFetch('high_and_low_scores', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify({
+        name,
+        score,
+        combo: maxCombo,
+        questions: correctCount,
+      }),
+    });
+    statusEl.textContent = '✅ グローバルランキングに保存しました！';
+    statusEl.style.color = 'var(--success)';
+  } catch (e) {
+    console.error('Supabase save error:', e);
+    statusEl.textContent = '⚠️ オンライン保存に失敗（ローカルには保存済み）';
+    statusEl.style.color = 'var(--accent)';
+  }
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = '保存';
+}
+
+function switchRankingTab(tab) {
+  currentRankingTab = tab;
+  document.getElementById('tab-global').classList.toggle('active', tab === 'global');
+  document.getElementById('tab-local').classList.toggle('active', tab === 'local');
+  if (tab === 'global') showGlobalRanking();
+  else showLocalRanking();
+}
+
+function showRanking() {
+  showScreen('ranking-screen');
+  if (currentRankingTab === 'global') showGlobalRanking();
+  else showLocalRanking();
+}
+
+async function showGlobalRanking() {
+  const list = document.getElementById('ranking-list');
+  list.innerHTML = '<div class="ranking-loading"><span class="spinner"></span>読み込み中...</div>';
+  try {
+    const data = await supabaseFetch('high_and_low_scores?select=name,score,combo,questions,created_at&order=score.desc&limit=50');
+    if (!data || data.length === 0) {
+      list.innerHTML = '<div style="text-align:center;color:var(--dim);padding:40px">まだ記録がありません</div>';
+      return;
+    }
+    list.innerHTML = data.map((r, i) => {
+      const date = r.created_at ? new Date(r.created_at).toLocaleDateString('ja-JP') : '';
+      return `
+        <div class="ranking-item">
+          <div class="rank-num ${i < 3 ? 'rank-' + (i+1) : ''}">${i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)}</div>
+          <div class="rank-name">${escHtml(r.name)}</div>
+          <div>
+            <div class="rank-score">${r.score}pt</div>
+            <div class="rank-date">${r.questions || '?'}問正解 | 🔥${r.combo || 0} | ${date}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = '<div style="text-align:center;color:var(--accent);padding:40px">⚠️ 読み込みに失敗しました<br><small>ローカルランキングをご覧ください</small></div>';
+  }
+}
+
+function showLocalRanking() {
+  const rankings = getLocalRankings();
+  const list = document.getElementById('ranking-list');
+  if (rankings.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--dim);padding:40px">まだ記録がありません</div>';
+    return;
+  }
+  list.innerHTML = rankings.map((r, i) => `
+    <div class="ranking-item">
+      <div class="rank-num ${i < 3 ? 'rank-' + (i+1) : ''}">${i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)}</div>
+      <div class="rank-name">${escHtml(r.name)}</div>
+      <div>
+        <div class="rank-score">${r.score}pt</div>
+        <div class="rank-date">${r.mode === 'sprint' ? '⚡' : '🔥'} ${r.correct || '?'}問正解 | ${r.date}</div>
+      </div>
+    </div>`).join('');
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ========================================
+// INPUT
+// ========================================
+document.querySelectorAll('.choice-btn').forEach(btn => {
+  btn.addEventListener('click', () => handleAnswer(btn.dataset.answer));
+  btn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handleAnswer(btn.dataset.answer);
+  }, { passive: false });
+});
+
+document.addEventListener('keydown', (e) => {
+  if (!gameActive) {
+    if (e.key === 'Enter' && document.getElementById('title-screen').classList.contains('active')) {
+      startGame('endless');
+    }
+    return;
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A' || e.key === '1') {
+    e.preventDefault(); handleAnswer('high');
+  } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S' || e.key === '2') {
+    e.preventDefault(); handleAnswer('same');
+  } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === '3') {
+    e.preventDefault(); handleAnswer('low');
+  }
+});
+
+// Init
+showTitle();
+</script>
+</body>
+</html>

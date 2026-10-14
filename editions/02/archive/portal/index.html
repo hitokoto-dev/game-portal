@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Portal - hitokoto-dev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0a;
+  --card-bg: rgba(0, 12, 0, 0.92);
+  --card-border: rgba(0, 255, 65, 0.35);
+  --text: #e8e8e8;
+  --text-sub: #b0b0b0;
+  --border: rgba(0, 255, 65, 0.2);
+  --accent: #00ff41;
+  --accent-hover: #33ff66;
+  --accent-dim: #009926;
+  --tag-bg: rgba(0, 255, 65, 0.1);
+  --tag-text: #88ee88;
+  --rank-gold: #ffd700;
+  --rank-silver: #c0c0c0;
+  --rank-bronze: #cd7f32;
+  --glow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+html {
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  padding: 0;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Matrix Digital Rain Canvas */
+#matrix-rain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* Content wrapper above rain */
+.content-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  padding: clamp(40px, 8vh, 80px) 20px clamp(24px, 4vh, 48px);
+}
+
+.header-icon {
+  font-size: clamp(36px, 8vw, 56px);
+  margin-bottom: 12px;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(0, 255, 65, 0.6);
+}
+
+.header h1 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  margin-bottom: 8px;
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(0, 255, 65, 0.5), 0 0 40px rgba(0, 255, 65, 0.2);
+}
+
+.header p {
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  color: var(--text-sub);
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.cowork-badge {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 8px 20px;
+  background: rgba(0, 255, 65, 0.08);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 24px;
+  font-size: clamp(0.78rem, 1.8vw, 0.88rem);
+  color: #cccccc;
+  letter-spacing: 0.04em;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.cowork-badge strong {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Game Grid */
+.games {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Game Card */
+.game-card {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 8px;
+  padding: clamp(20px, 3vw, 28px);
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.game-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.15), 0 0 60px rgba(0, 255, 65, 0.08);
+  border-color: rgba(0, 255, 65, 0.6);
+}
+
+.game-card:active {
+  transform: translateY(0);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.card-emoji {
+  font-size: clamp(22px, 4vw, 28px);
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 255, 65, 0.1);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 8px;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+}
+
+.card-title {
+  font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: #ffffff;
+  font-family: 'Share Tech Mono', 'Noto Sans JP', monospace;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+.card-desc {
+  font-size: clamp(0.82rem, 1.8vw, 0.92rem);
+  color: var(--text-sub);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  font-size: 0.72rem;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  padding: 3px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Ranking Section */
+.ranking-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 255, 65, 0.2);
+}
+
+.ranking-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Share Tech Mono', monospace;
+  text-shadow: 0 0 6px rgba(0, 255, 65, 0.3);
+}
+
+.ranking-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(0, 255, 65, 0.04);
+  border: 1px solid rgba(0, 255, 65, 0.1);
+  font-family: 'Share Tech Mono', 'Noto Sans JP', monospace;
+}
+
+.ranking-item:nth-child(1) { background: rgba(255, 215, 0, 0.1); border-color: rgba(255, 215, 0, 0.25); }
+.ranking-item:nth-child(2) { background: rgba(192, 192, 192, 0.08); border-color: rgba(192, 192, 192, 0.2); }
+.ranking-item:nth-child(3) { background: rgba(205, 127, 50, 0.1); border-color: rgba(205, 127, 50, 0.2); }
+
+.rank-badge {
+  font-weight: 700;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ranking-item:nth-child(1) .rank-badge { color: var(--rank-gold); }
+.ranking-item:nth-child(2) .rank-badge { color: var(--rank-silver); }
+.ranking-item:nth-child(3) .rank-badge { color: var(--rank-bronze); }
+
+.rank-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.rank-score {
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.ranking-loading {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding: 4px 0;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.card-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--accent);
+  font-weight: 600;
+  gap: 4px;
+  font-family: 'Share Tech Mono', monospace;
+  text-shadow: 0 0 6px rgba(0, 255, 65, 0.3);
+}
+
+.card-arrow svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.15s;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 65, 0.4));
+}
+
+.game-card:hover .card-arrow svg {
+  transform: translateX(3px);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 24px 20px 40px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.footer-credit {
+  font-size: 0.72rem;
+  color: #666666;
+}
+
+/* Scan line effect - very subtle */
+.content-wrap::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 100;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.02) 2px,
+    rgba(0, 0, 0, 0.02) 4px
+  );
+}
+
+/* Stats Dashboard */
+.stats-section {
+  max-width: 720px;
+  margin: 0 auto 24px;
+  padding: 0 20px;
+}
+
+.stats-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: none;
+  border: 1px solid rgba(0, 255, 65, 0.25);
+  color: var(--accent);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  padding: 10px 18px;
+  border-radius: 6px;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.stats-toggle:hover {
+  background: rgba(0, 255, 65, 0.06);
+  border-color: rgba(0, 255, 65, 0.5);
+}
+
+.stats-toggle .arrow {
+  transition: transform 0.2s;
+  font-size: 0.7rem;
+}
+
+.stats-toggle.open .arrow {
+  transform: rotate(90deg);
+}
+
+.stats-panel {
+  display: none;
+  margin-top: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.stats-panel.open {
+  display: block;
+}
+
+.stats-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Share Tech Mono', 'Noto Sans JP', monospace;
+  font-size: 0.82rem;
+}
+
+.stats-label {
+  width: 90px;
+  flex-shrink: 0;
+  color: var(--text-sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-bar-wrap {
+  flex: 1;
+  height: 20px;
+  background: rgba(0, 255, 65, 0.06);
+  border: 1px solid rgba(0, 255, 65, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stats-bar {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0, 255, 65, 0.5), rgba(0, 255, 65, 0.8));
+  border-radius: 3px;
+  transition: width 0.6s ease;
+  min-width: 2px;
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+.stats-count {
+  width: 50px;
+  text-align: right;
+  color: var(--accent);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.stats-total {
+  text-align: right;
+  margin-top: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 255, 65, 0.15);
+}
+
+.stats-total strong {
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .games { padding: 0 12px 40px; gap: 12px; }
+  .game-card { padding: 16px; }
+  .card-emoji { width: 40px; height: 40px; }
+  .stats-section { padding: 0 12px; }
+  .stats-label { width: 70px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="matrix-rain"></canvas>
+
+<div class="content-wrap">
+
+<header class="header">
+  <div class="header-icon">[GAME]</div>
+  <h1>Game Portal</h1>
+  <p>ブラウザで遊べるミニゲーム集</p>
+  <div class="cowork-badge">All games created with <strong>Claude Cowork</strong></div>
+</header>
+
+<section class="stats-section">
+  <button class="stats-toggle" id="stats-toggle" onclick="toggleStats()">
+    <span class="arrow">▶</span> // ACCESS COUNTER
+  </button>
+  <div class="stats-panel" id="stats-panel">
+    <div class="stats-bar-container" id="stats-bars">
+      <div style="color:var(--text-sub);font-family:'Share Tech Mono',monospace;font-size:0.8rem;">読み込み中...</div>
+    </div>
+    <div class="stats-total" id="stats-total"></div>
+  </div>
+</section>
+
+<main class="games">
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/reflex-challenge/" target="_blank" rel="noopener" data-slug="reflex-challenge">
+    <div class="card-top">
+      <div class="card-emoji">RF</div>
+      <div class="card-title">リフレックス・チャレンジ</div>
+    </div>
+    <div class="card-desc">
+      4方向に出題される問題を反射神経で素早くタップ！スピードボーナスとコンボで高得点を狙え。グローバルランキングで世界中のプレイヤーと競争できる。
+    </div>
+    <div class="card-tags">
+      <span class="tag">反射神経</span>
+      <span class="tag">ランキング付き</span>
+      <span class="tag">スマホ対応</span>
+    </div>
+    <div class="ranking-section" id="ranking-reflex">
+      <div class="ranking-title">// RANKING BEST 5</div>
+      <div class="ranking-loading">読み込み中...</div>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/english-phrase-quiz/" target="_blank" rel="noopener" data-slug="english-phrase-quiz">
+    <div class="card-top">
+      <div class="card-emoji">EN</div>
+      <div class="card-title">English Phrase Quiz</div>
+    </div>
+    <div class="card-desc">
+      英語フレーズの正しい使い方を4択で当てるクイズ。日常会話で使えるフレーズを楽しく学ぼう！
+    </div>
+    <div class="card-tags">
+      <span class="tag">英語学習</span>
+      <span class="tag">4択クイズ</span>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/english-phrase-reverse-quiz/" target="_blank" rel="noopener" data-slug="english-phrase-reverse-quiz">
+    <div class="card-top">
+      <div class="card-emoji">RQ</div>
+      <div class="card-title">英語フレーズ逆引きクイズ</div>
+    </div>
+    <div class="card-desc">
+      日本語のシチュエーションからピッタリの英語フレーズを当てよう！初級・中級・上級の3段階で、速く答えるほど高得点。
+    </div>
+    <div class="card-tags">
+      <span class="tag">英語学習</span>
+      <span class="tag">逆引き</span>
+      <span class="tag">3難易度</span>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/yokeru/" target="_blank" rel="noopener" data-slug="yokeru">
+    <div class="card-top">
+      <div class="card-emoji">TY</div>
+      <div class="card-title">TAMAYOKE REBORN</div>
+    </div>
+    <div class="card-desc">
+      降り注ぐ弾を華麗によけろ！安全地帯や倍速エリアを活用して高スコアを目指す弾よけアクションゲーム。
+    </div>
+    <div class="card-tags">
+      <span class="tag">アクション</span>
+      <span class="tag">弾よけ</span>
+      <span class="tag">スマホ対応</span>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/high-and-low/" target="_blank" rel="noopener" data-slug="high-and-low">
+    <div class="card-top">
+      <div class="card-emoji">H&L</div>
+      <div class="card-title">HiGH&LOW クイズ</div>
+    </div>
+    <div class="card-desc">
+      みんなが うろ覚えしていることを「高い？低い？」で当てるクイズゲーム。エンドレスモードでハイスコアを狙うか、10問スプリントで最速タイムを競おう！
+    </div>
+    <div class="card-tags">
+      <span class="tag">クイズ</span>
+      <span class="tag">ランキング付き</span>
+      <span class="tag">2モード</span>
+    </div>
+    <div class="ranking-section" id="ranking-high-and-low">
+      <div class="ranking-title">// RANKING BEST 5</div>
+      <div class="ranking-loading">読み込み中...</div>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/kids-quiz/" target="_blank" rel="noopener" data-slug="kids-quiz">
+    <div class="card-top">
+      <div class="card-emoji">KQ</div>
+      <div class="card-title">どれがいちばん？ キッズクイズ</div>
+    </div>
+    <div class="card-desc">
+      「どれがいちばん おおきい？」「おもい？」「たかい？」を絵文字で選ぶ、小さなお子さま向けの比較クイズ。ひらがなだけで遊べるよ！
+    </div>
+    <div class="card-tags">
+      <span class="tag">キッズ向け</span>
+      <span class="tag">ひらがな</span>
+      <span class="tag">ランキング付き</span>
+    </div>
+    <div class="ranking-section" id="ranking-kids">
+      <div class="ranking-title">// RANKING BEST 5</div>
+      <div class="ranking-loading">読み込み中...</div>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/typing-reflex/" target="_blank" rel="noopener" data-slug="typing-reflex">
+    <div class="card-top">
+      <div class="card-emoji">KB</div>
+      <div class="card-title">反射キーボード・スマッシュ</div>
+    </div>
+    <div class="card-desc">
+      表示される文字・単語を素早くタイプせよ！レベルが上がるにつれ難易度アップ。スマホはフリック入力、PCはキーボード入力に対応。スピードボーナス＆コンボで高スコアを狙え！
+    </div>
+    <div class="card-tags">
+      <span class="tag">タイピング</span>
+      <span class="tag">ランキング付き</span>
+      <span class="tag">スマホ対応</span>
+    </div>
+    <div class="ranking-section" id="ranking-typing">
+      <div class="ranking-title">// RANKING BEST 5</div>
+      <div class="ranking-loading">読み込み中...</div>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+  <a class="game-card" href="https://hitokoto-dev.github.io/true-false-blitz/" target="_blank" rel="noopener" data-slug="true-false-blitz">
+    <div class="card-top">
+      <div class="card-emoji">TF</div>
+      <div class="card-title">真偽スピード判定</div>
+    </div>
+    <div class="card-desc">理科・社会の紛らわしい問題をTRUE/FALSEで判定。30秒の高速バトル。</div>
+    <div class="card-tags">
+      <span class="tag">判定</span>
+      <span class="tag">雑学</span>
+      <span class="tag">タイムアタック</span>
+    </div>
+    <div class="ranking-section" id="ranking-true-false-blitz">
+      <div class="ranking-title">// RANKING BEST 5</div>
+      <div class="ranking-loading">読み込み中...</div>
+    </div>
+    <div class="card-arrow">
+      あそぶ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+  </a>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-credit">&copy; hitokoto-dev</div>
+</footer>
+
+</div>
+
+<script>
+// Matrix Digital Rain
+(function() {
+  const canvas = document.getElementById('matrix-rain');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const fontSize = 14;
+  let columns = Math.floor(canvas.width / fontSize);
+  let drops = new Array(columns).fill(1);
+
+  window.addEventListener('resize', () => {
+    columns = Math.floor(canvas.width / fontSize);
+    const newDrops = new Array(columns).fill(1);
+    for (let i = 0; i < Math.min(drops.length, columns); i++) {
+      newDrops[i] = drops[i];
+    }
+    drops = newDrops;
+  });
+
+  function draw() {
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = fontSize + 'px Share Tech Mono, monospace';
+
+    for (let i = 0; i < drops.length; i++) {
+      const char = chars[Math.floor(Math.random() * chars.length)];
+
+      const brightness = Math.random();
+      if (brightness > 0.95) {
+        ctx.fillStyle = '#ffffff';
+      } else if (brightness > 0.8) {
+        ctx.fillStyle = '#00ff41';
+      } else {
+        ctx.fillStyle = 'rgba(0, 255, 65, 0.4)';
+      }
+
+      ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+  }
+
+  setInterval(draw, 50);
+})();
+
+// Rankings
+(function() {
+  const SUPABASE_URL = 'https://mvnhojzeshbquobffkmq.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bmhvanplc2hicXVvYmZma21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MjQ4NzgsImV4cCI6MjA4ODAwMDg3OH0.kJNoHqJpmC5PLuojOGrnmWBT4TMZG5HbIv7bFY1D3QI';
+
+  const rankings = [
+    { elementId: 'ranking-high-and-low', table: 'high_and_low_scores' },
+    { elementId: 'ranking-reflex', table: 'scores' },
+    { elementId: 'ranking-kids', table: 'kids_scores' },
+    { elementId: 'ranking-true-false-blitz', table: 'true_false_blitz_scores' },
+    { elementId: 'ranking-typing', table: 'typing_reflex_scores' },
+  ];
+
+  async function fetchRanking(table) {
+    const url = `${SUPABASE_URL}/rest/v1/${table}?select=name,score&order=score.desc&limit=5`;
+    const res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    if (!res.ok) throw new Error('Failed to fetch');
+    return res.json();
+  }
+
+  function renderRanking(elementId, data) {
+    const container = document.getElementById(elementId);
+    if (!container) return;
+
+    if (!data || data.length === 0) {
+      container.querySelector('.ranking-loading').textContent = 'まだランキングデータがありません';
+      return;
+    }
+
+    const list = document.createElement('ol');
+    list.className = 'ranking-list';
+
+    data.forEach((item, i) => {
+      const li = document.createElement('li');
+      li.className = 'ranking-item';
+
+      const badge = document.createElement('span');
+      badge.className = 'rank-badge';
+      badge.textContent = `${i + 1}`;
+
+      const name = document.createElement('span');
+      name.className = 'rank-name';
+      name.textContent = item.name || '---';
+
+      const score = document.createElement('span');
+      score.className = 'rank-score';
+      score.textContent = item.score.toLocaleString() + ' pt';
+
+      li.appendChild(badge);
+      li.appendChild(name);
+      li.appendChild(score);
+      list.appendChild(li);
+    });
+
+    const loading = container.querySelector('.ranking-loading');
+    if (loading) loading.remove();
+    container.appendChild(list);
+  }
+
+  rankings.forEach(async ({ elementId, table }) => {
+    try {
+      const data = await fetchRanking(table);
+      renderRanking(elementId, data);
+    } catch (e) {
+      const container = document.getElementById(elementId);
+      if (container) {
+        const loading = container.querySelector('.ranking-loading');
+        if (loading) loading.textContent = 'ランキングを取得できませんでした';
+      }
+    }
+  });
+
+  // Click tracking
+  const SLUG_TO_NAME = {
+    'reflex-challenge': 'リフレックス',
+    'english-phrase-quiz': 'EN Phrase',
+    'english-phrase-reverse-quiz': '英語逆引き',
+    'yokeru': 'TAMAYOKE',
+    'high-and-low': 'HiGH&LOW',
+    'kids-quiz': 'キッズクイズ',
+    'typing-reflex': 'キーボード',
+    'true-false-blitz': '真偽判定',
+    'marubatsu-sprint': '○✕早押し',
+    'emoji-flash-math': '暗算フラッシュ',
+  };
+
+  document.querySelectorAll('.game-card[data-slug]').forEach(card => {
+    card.addEventListener('click', () => {
+      const slug = card.dataset.slug;
+      if (!slug) return;
+      fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_page_view`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slug }),
+      }).catch(() => {});
+    });
+  });
+
+  // Stats dashboard
+  async function loadStats() {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/game_stats?select=game_slug,view_count&order=view_count.desc`;
+      const res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        }
+      });
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      renderStats(data);
+    } catch (e) {
+      document.getElementById('stats-bars').innerHTML =
+        '<div style="color:var(--text-sub);font-family:\'Share Tech Mono\',monospace;font-size:0.8rem;">データを取得できませんでした</div>';
+    }
+  }
+
+  function renderStats(data) {
+    const container = document.getElementById('stats-bars');
+    const totalEl = document.getElementById('stats-total');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-sub);font-family:\'Share Tech Mono\',monospace;font-size:0.8rem;">まだアクセスデータがありません</div>';
+      return;
+    }
+    const maxCount = Math.max(...data.map(d => d.view_count), 1);
+    const total = data.reduce((s, d) => s + d.view_count, 0);
+
+    container.innerHTML = data.map(d => {
+      const pct = (d.view_count / maxCount * 100).toFixed(1);
+      const name = SLUG_TO_NAME[d.game_slug] || d.game_slug;
+      return `<div class="stats-row">
+        <span class="stats-label">${name}</span>
+        <div class="stats-bar-wrap"><div class="stats-bar" style="width:${pct}%"></div></div>
+        <span class="stats-count">${d.view_count.toLocaleString()}</span>
+      </div>`;
+    }).join('');
+
+    totalEl.innerHTML = `TOTAL: <strong>${total.toLocaleString()}</strong> views`;
+  }
+
+  loadStats();
+})();
+
+function toggleStats() {
+  const btn = document.getElementById('stats-toggle');
+  const panel = document.getElementById('stats-panel');
+  btn.classList.toggle('open');
+  panel.classList.toggle('open');
+}
+</script>
+
+</body>
+</html>

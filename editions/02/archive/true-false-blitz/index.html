@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>⚡ 真偽スピード判定</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a1a;
+    --card: #151530;
+    --accent: #ff6b35;
+    --accent2: #00e5ff;
+    --success: #00e676;
+    --fail: #ff1744;
+    --text: #ffffff;
+    --dim: #8888aa;
+    --true-color: #00e676;
+    --false-color: #ff1744;
+  }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow: hidden;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100dvh; padding: 20px; }
+  .screen.active { display: flex; }
+
+  /* Title Screen */
+  #title-screen { gap: 20px; background: radial-gradient(ellipse at center, #1a1a3a 0%, var(--bg) 70%); }
+  .game-logo { font-size: clamp(2.5rem, 8vw, 5rem); font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; line-height: 1.2; }
+  .game-subtitle { color: var(--dim); font-size: clamp(0.9rem, 2.5vw, 1.2rem); text-align: center; margin-bottom: 10px; }
+
+  .btn {
+    padding: 16px 48px; font-size: 1.3rem; font-weight: 700;
+    border: none; border-radius: 60px; cursor: pointer;
+    transition: all 0.2s; font-family: inherit;
+  }
+  .btn:active { transform: scale(0.95); }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #ff8a50); color: #fff; box-shadow: 0 4px 20px rgba(255,107,53,0.4); }
+  .btn-secondary { background: transparent; color: var(--accent2); border: 2px solid var(--accent2); padding: 12px 36px; font-size: 1rem; }
+
+  .best-score-display { color: var(--accent2); font-size: 1rem; margin-top: 8px; }
+
+  /* Sound toggle */
+  .sound-toggle {
+    position: fixed; top: 12px; right: 12px; z-index: 200;
+    background: var(--card); border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text); font-size: 1.4rem; width: 44px; height: 44px;
+    border-radius: 50%; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .sound-toggle:active { transform: scale(0.9); }
+
+  /* Countdown */
+  #countdown-screen { background: var(--bg); }
+  .countdown-number {
+    font-size: clamp(8rem, 30vw, 16rem); font-weight: 900;
+    animation: countPulse 0.6s ease-out;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  @keyframes countPulse {
+    0% { transform: scale(2); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Game Screen */
+  #game-screen { padding: 0; position: relative; background: var(--bg); }
+
+  .game-hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 20px; background: rgba(0,0,0,0.5);
+    z-index: 10; font-size: clamp(0.85rem, 2vw, 1rem);
+  }
+  .hud-score { color: var(--accent); font-weight: 700; }
+  .hud-combo { color: var(--accent2); font-weight: 700; }
+  .hud-timer { color: var(--text); font-weight: 700; }
+
+  .timer-bar {
+    position: absolute; top: 48px; left: 0; right: 0; height: 4px;
+    background: rgba(255,255,255,0.1); z-index: 10;
+  }
+  .timer-bar-fill { height: 100%; background: var(--accent2); transition: width 0.05s linear; }
+
+  .question-area {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 20px 20px; width: 100%;
+  }
+
+  .question-category {
+    font-size: clamp(0.75rem, 2vw, 0.9rem);
+    color: var(--accent2); margin-bottom: 8px;
+    padding: 4px 14px; border-radius: 20px;
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    background: rgba(0, 229, 255, 0.08);
+  }
+
+  .statement-text {
+    font-size: clamp(1.3rem, 4.5vw, 2.2rem);
+    font-weight: 900; text-align: center;
+    line-height: 1.4; margin-bottom: 24px;
+    max-width: 600px; padding: 0 10px;
+  }
+
+  .question-number {
+    font-size: clamp(0.75rem, 2vw, 0.85rem);
+    color: var(--dim); margin-bottom: 16px;
+  }
+
+  /* TRUE/FALSE buttons */
+  .tf-buttons {
+    display: flex; gap: 16px; width: 100%; max-width: 400px;
+    padding: 0 16px;
+  }
+
+  .tf-btn {
+    flex: 1; padding: 24px 10px; border-radius: 20px;
+    font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 900;
+    font-family: inherit; cursor: pointer;
+    transition: all 0.12s; border: 3px solid;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tf-btn:active { transform: scale(0.93); }
+
+  .tf-btn-true {
+    background: rgba(0, 230, 118, 0.1);
+    border-color: rgba(0, 230, 118, 0.5);
+    color: var(--true-color);
+  }
+  .tf-btn-true:active { background: rgba(0, 230, 118, 0.3); }
+
+  .tf-btn-false {
+    background: rgba(255, 23, 68, 0.1);
+    border-color: rgba(255, 23, 68, 0.5);
+    color: var(--false-color);
+  }
+  .tf-btn-false:active { background: rgba(255, 23, 68, 0.3); }
+
+  .tf-btn .tf-label {
+    font-size: clamp(0.65rem, 1.8vw, 0.8rem);
+    opacity: 0.7;
+  }
+
+  .tf-btn.correct { background: var(--success) !important; border-color: var(--success) !important; color: #fff !important; }
+  .tf-btn.wrong { background: var(--fail) !important; border-color: var(--fail) !important; color: #fff !important; }
+
+  /* Flash overlay */
+  .flash-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; z-index: 100;
+    animation: flash 0.3s ease-out forwards;
+  }
+  .flash-correct { background: rgba(0, 230, 118, 0.25); }
+  .flash-wrong { background: rgba(255, 23, 68, 0.4); }
+  @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* Combo popup */
+  .combo-popup {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(2rem, 8vw, 4rem); font-weight: 900;
+    pointer-events: none; z-index: 50;
+    animation: comboAnim 0.8s ease-out forwards;
+    color: var(--accent2); text-shadow: 0 0 30px rgba(0, 229, 255, 0.6);
+  }
+  @keyframes comboAnim {
+    0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    30%  { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -80%) scale(1); opacity: 0; }
+  }
+
+  /* Answer indicator */
+  .answer-indicator {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(3rem, 12vw, 6rem); font-weight: 900;
+    pointer-events: none; z-index: 60;
+    animation: answerPop 0.5s ease-out forwards;
+  }
+  @keyframes answerPop {
+    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+  }
+
+  /* Result Screen */
+  #result-screen { gap: 14px; background: radial-gradient(ellipse at center, #1a1a3a 0%, var(--bg) 70%); }
+  .result-label { font-size: 1.2rem; color: var(--dim); }
+  .result-score {
+    font-size: clamp(4rem, 15vw, 8rem); font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .result-stats { text-align: center; color: var(--dim); line-height: 2; font-size: 1rem; }
+  .result-new-record { color: var(--accent); font-weight: 700; font-size: 1.2rem; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* Ranking Screen */
+  #ranking-screen { gap: 16px; padding: 20px; overflow-y: auto; justify-content: flex-start; padding-top: 40px; }
+  .ranking-title { font-size: 1.8rem; font-weight: 900; color: var(--accent2); margin-bottom: 8px; }
+  .ranking-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .ranking-tab {
+    padding: 8px 20px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.15);
+    background: transparent; color: var(--dim); font-weight: 700;
+    cursor: pointer; font-family: inherit; font-size: 0.9rem;
+  }
+  .ranking-tab.active { background: var(--accent2); color: #000; border-color: var(--accent2); }
+  .ranking-list { width: 100%; max-width: 400px; }
+  .ranking-item {
+    display: flex; align-items: center; padding: 14px 16px;
+    background: var(--card); border-radius: 12px; margin-bottom: 8px; gap: 12px;
+  }
+  .rank-num { font-size: 1.4rem; font-weight: 900; min-width: 40px; text-align: center; }
+  .rank-1 { color: #ffd700; } .rank-2 { color: #c0c0c0; } .rank-3 { color: #cd7f32; }
+  .rank-name { flex: 1; font-weight: 700; }
+  .rank-score { color: var(--accent2); font-weight: 700; font-size: 1.1rem; }
+  .rank-date { color: var(--dim); font-size: 0.75rem; }
+  .ranking-loading { text-align: center; color: var(--dim); padding: 40px; }
+  .ranking-loading .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--dim); border-top-color: var(--accent2); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .save-status { font-size: 0.85rem; margin-top: 4px; min-height: 20px; }
+
+  .name-input-area { display: flex; gap: 8px; margin-top: 8px; width: 100%; max-width: 300px; }
+  .name-input-area input {
+    flex: 1; padding: 12px 16px; border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.2); background: var(--card);
+    color: var(--text); font-size: 1rem; font-family: inherit; outline: none;
+  }
+  .name-input-area input:focus { border-color: var(--accent2); }
+
+  .kb-hint { color: var(--dim); font-size: 0.8rem; margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<!-- Sound Toggle -->
+<button class="sound-toggle" id="sound-toggle" onclick="toggleSound()">🔊</button>
+
+<!-- Title Screen -->
+<div id="title-screen" class="screen active">
+  <div class="game-logo">⚡ 真偽スピード<br>判定</div>
+  <div class="game-subtitle">理科・社会の雑学を30秒で判定せよ</div>
+  <button class="btn btn-primary" onclick="startGame()">スタート</button>
+  <button class="btn btn-secondary" onclick="showRanking()">🏆 ランキング</button>
+  <div class="best-score-display" id="best-score-display"></div>
+  <div class="kb-hint">🖥️ キーボード: ← TRUE / → FALSE</div>
+</div>
+
+<!-- Countdown Screen -->
+<div id="countdown-screen" class="screen">
+  <div class="countdown-number" id="countdown-num">3</div>
+</div>
+
+<!-- Game Screen -->
+<div id="game-screen" class="screen">
+  <div class="game-hud">
+    <div class="hud-score">スコア: <span id="hud-score">0</span></div>
+    <div class="hud-combo" id="hud-combo"></div>
+    <div class="hud-timer">⏱ <span id="hud-timer">30.0</span>s</div>
+  </div>
+  <div class="timer-bar"><div class="timer-bar-fill" id="timer-bar-fill"></div></div>
+
+  <div class="question-area">
+    <div class="question-category" id="q-category"></div>
+    <div class="question-number" id="q-number"></div>
+    <div class="statement-text" id="q-statement"></div>
+    <div class="tf-buttons">
+      <button class="tf-btn tf-btn-true" id="btn-true" onclick="answer(true)">
+        ⭕ TRUE
+        <span class="tf-label">← キー</span>
+      </button>
+      <button class="tf-btn tf-btn-false" id="btn-false" onclick="answer(false)">
+        ❌ FALSE
+        <span class="tf-label">→ キー</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Result Screen -->
+<div id="result-screen" class="screen">
+  <div class="result-label">スコア</div>
+  <div class="result-score" id="result-score">0</div>
+  <div id="result-new-record" class="result-new-record" style="display:none">🎉 NEW RECORD!</div>
+  <div class="result-stats" id="result-stats"></div>
+  <div class="name-input-area" id="name-input-area">
+    <input type="text" id="player-name" placeholder="名前を入力" maxlength="10">
+    <button class="btn btn-primary" style="padding:12px 24px;font-size:1rem" id="save-btn" onclick="saveScore()">保存</button>
+  </div>
+  <div class="save-status" id="save-status"></div>
+  <button class="btn btn-primary" onclick="startGame()" style="margin-top:8px">もう一回</button>
+  <button class="btn btn-secondary" onclick="showRanking()">🏆 ランキング</button>
+  <button class="btn btn-secondary" onclick="showTitle()">タイトルへ</button>
+</div>
+
+<!-- Ranking Screen -->
+<div id="ranking-screen" class="screen">
+  <div class="ranking-title">🏆 ランキング</div>
+  <div class="ranking-tabs">
+    <button class="ranking-tab active" id="tab-global" onclick="switchRankingTab('global')">🌍 全員</button>
+    <button class="ranking-tab" id="tab-local" onclick="switchRankingTab('local')">📱 自分</button>
+  </div>
+  <div class="ranking-list" id="ranking-list"></div>
+  <button class="btn btn-secondary" onclick="showTitle()" style="margin-top:16px">戻る</button>
+</div>
+
+<script>
+// ========================================
+// AUDIO ENGINE
+// ========================================
+let audioCtx = null;
+let soundEnabled = true;
+let bgmGain = null;
+let bgmOscillators = [];
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('sound-toggle').textContent = soundEnabled ? '🔊' : '🔇';
+  if (!soundEnabled) stopBGM();
+}
+
+function playSE(type) {
+  if (!soundEnabled || !audioCtx) return;
+  const now = audioCtx.currentTime;
+
+  if (type === 'correct') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(660, now);
+    osc.frequency.linearRampToValueAtTime(880, now + 0.08);
+    osc.frequency.linearRampToValueAtTime(1100, now + 0.15);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.25);
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(880, now + 0.03);
+    osc2.frequency.linearRampToValueAtTime(1320, now + 0.15);
+    gain2.gain.setValueAtTime(0.12, now + 0.03);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc2.connect(gain2).connect(audioCtx.destination);
+    osc2.start(now + 0.03); osc2.stop(now + 0.3);
+  } else if (type === 'wrong') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.35);
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(180, now);
+    osc2.frequency.linearRampToValueAtTime(80, now + 0.25);
+    gain2.gain.setValueAtTime(0.08, now);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc2.connect(gain2).connect(audioCtx.destination);
+    osc2.start(now); osc2.stop(now + 0.3);
+  } else if (type === 'countdown') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523, now);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.2);
+  } else if (type === 'go') {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.06);
+      gain.gain.setValueAtTime(0.2, now + i * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.3);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + i * 0.06); osc.stop(now + i * 0.06 + 0.3);
+    });
+  } else if (type === 'combo') {
+    [1200, 1500, 1800].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.05);
+      gain.gain.setValueAtTime(0.12, now + i * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.2);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + i * 0.05); osc.stop(now + i * 0.05 + 0.2);
+    });
+  } else if (type === 'newrecord') {
+    const melody = [523, 659, 784, 1047, 784, 1047, 1319];
+    melody.forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(freq, now + i * 0.1);
+      gain.gain.setValueAtTime(0.18, now + i * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.25);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + i * 0.1); osc.stop(now + i * 0.1 + 0.25);
+    });
+  } else if (type === 'click') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, now);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.06);
+  }
+}
+
+function startBGM() {
+  if (!soundEnabled || !audioCtx) return;
+  stopBGM();
+  bgmGain = audioCtx.createGain();
+  bgmGain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+  bgmGain.connect(audioCtx.destination);
+  const bass = audioCtx.createOscillator();
+  bass.type = 'sine';
+  bass.frequency.setValueAtTime(80, audioCtx.currentTime);
+  const bassGain = audioCtx.createGain();
+  bassGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+  bass.connect(bassGain).connect(bgmGain);
+  bass.start();
+  bgmOscillators.push(bass);
+  const lfo = audioCtx.createOscillator();
+  lfo.type = 'square';
+  lfo.frequency.setValueAtTime(4, audioCtx.currentTime);
+  const lfoGain = audioCtx.createGain();
+  lfoGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+  lfo.connect(lfoGain).connect(bassGain.gain);
+  lfo.start();
+  bgmOscillators.push(lfo);
+  const pad = audioCtx.createOscillator();
+  pad.type = 'triangle';
+  pad.frequency.setValueAtTime(220, audioCtx.currentTime);
+  const padGain = audioCtx.createGain();
+  padGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  pad.connect(padGain).connect(bgmGain);
+  pad.start();
+  bgmOscillators.push(pad);
+}
+
+function stopBGM() {
+  bgmOscillators.forEach(o => { try { o.stop(); } catch(e){} });
+  bgmOscillators = [];
+  bgmGain = null;
+}
+
+// ========================================
+// QUESTIONS (50+ questions)
+// ========================================
+const questions = [
+  // ===== 生物学 (12問) =====
+  { statement: "蜘蛛は昆虫である", answer: false, category: "生物" },
+  { statement: "クジラは哺乳動物である", answer: true, category: "生物" },
+  { statement: "ペンギンは飛べない鳥である", answer: true, category: "生物" },
+  { statement: "トカゲは爬虫類である", answer: true, category: "生物" },
+  { statement: "ワニは両生類である", answer: false, category: "生物" },
+  { statement: "コウモリは鳥である", answer: false, category: "生物" },
+  { statement: "イルカは魚である", answer: false, category: "生物" },
+  { statement: "カエルは両生類である", answer: true, category: "生物" },
+  { statement: "タコには心臓が3つある", answer: true, category: "生物" },
+  { statement: "植物は二酸化炭素を吸って酸素を出す", answer: true, category: "生物" },
+  { statement: "人間の骨の数は成人と赤ちゃんで同じである", answer: false, category: "生物" },
+  { statement: "サメは哺乳類である", answer: false, category: "生物" },
+
+  // ===== 化学 (10問) =====
+  { statement: "水の化学式はH2Oである", answer: true, category: "化学" },
+  { statement: "食塩の化学式はNaClである", answer: true, category: "化学" },
+  { statement: "砂糖の主成分はグルコースである", answer: true, category: "化学" },
+  { statement: "ダイヤモンドは炭素からできている", answer: true, category: "化学" },
+  { statement: "酸素はすべての物質に含まれている", answer: false, category: "化学" },
+  { statement: "塩酸と水酸化ナトリウムを混ぜると酸性になる", answer: false, category: "化学" },
+  { statement: "鉄は空気中で酸化して錆びる", answer: true, category: "化学" },
+  { statement: "ヘリウムは最も軽い元素である", answer: false, category: "化学" },
+  { statement: "金は酸に溶けない", answer: false, category: "化学" },
+  { statement: "二酸化炭素は温室効果ガスである", answer: true, category: "化学" },
+
+  // ===== 物理学 (10問) =====
+  { statement: "光の速度は音の速度より速い", answer: true, category: "物理" },
+  { statement: "金は鉄より密度が高い", answer: true, category: "物理" },
+  { statement: "地球上で最も密度が高い元素は金である", answer: false, category: "物理" },
+  { statement: "磁石の両端は同じ性質である", answer: false, category: "物理" },
+  { statement: "真空中では音は伝わらない", answer: true, category: "物理" },
+  { statement: "物体の重さは地球上でも月でも同じである", answer: false, category: "物理" },
+  { statement: "電流の速さは光の速さとほぼ同じである", answer: true, category: "物理" },
+  { statement: "水は4℃のとき最も密度が高い", answer: true, category: "物理" },
+  { statement: "落下速度は物体の重さに比例する", answer: false, category: "物理" },
+  { statement: "虸は7色である", answer: false, category: "物理" },
+
+  // ===== 地理 (12問) =====
+  { statement: "富士山は日本一高い山である", answer: true, category: "地理" },
+  { statement: "北海道は日本一面積が広い都道府県である", answer: true, category: "地理" },
+  { statement: "琵琶湖は日本一大きい湖である", answer: true, category: "地理" },
+  { statement: "瀬戸内海は世界一大きい内海である", answer: false, category: "地理" },
+  { statement: "本州は日本一大きい島である", answer: true, category: "地理" },
+  { statement: "沖縄県が日本で最も南にある都道府県である", answer: false, category: "地理" },
+  { statement: "最北端の都道府県は北海道である", answer: true, category: "地理" },
+  { statement: "サハラ砂漠はアフリカにある", answer: true, category: "地理" },
+  { statement: "ロシアは世界で最も面積が大きい国である", answer: true, category: "地理" },
+  { statement: "ナイル川は世界で㜀も長い川である", answer: true, category: "地理" },
+  { statement: "オーストラリアは南半球にある", answer: true, category: "地理" },
+  { statement: "エベレストはアフリカ大陸にある", answer: false, category: "地理" },
+
+  // ===== 歴史 (10問) =====
+  { statement: "聖徳太子は飛鳥時代の人物である", answer: true, category: "歴史" },
+  { statement: "源頼朝は鎌倉幕府を開いた", answer: true, category: "歴史" },
+  { statement: "織田信長は徳川家康の子である", answer: false, category: "歴史" },
+  { statement: "江戸時代は約250年間続いた", answer: true, category: "歴史" },
+  { statement: "平清盛は平安時代の武将である", answer: true, category: "歴史" },
+  { statement: "室电幕府の最後の将軍は足利義昭である", answer: true, category: "歴史" },
+  { statement: "ナポレオンはフランス皇帝になった", answer: true, category: "歴史" },
+  { statement: "第二次世界大戦は1945年に終わった", answer: true, category: "歴史" },
+  { statement: "豊臣秀吉は関ヶ原の戦いで勝利した", answer: false, category: "歴史" },
+  { statement: "明治維新は19世紀に起きた", answer: true, category: "歴史" },
+
+  // ===== 世界知識・雑学 (11問) =====
+  { statement: "中国は世界で最も人口が多い国である", answer: false, category: "雑学" },
+  { statement: "赤道はアフリカを通る", answer: true, category: "雑学" },
+  { statement: "グリーンランドはデンマークの領土である", answer: true, category: "雑学" },
+  { statement: "太陽は地球の約109倍の直径がある", answer: true, category: "雑学" },
+  { statement: "月の裏側は地球から見ることができない", answer: true, category: "雑学" },
+  { statement: "1年は365日ちょうどである", answer: false, category: "雑学" },
+  { statement: "北極にはペン�.ンがいる", answer: false, category: "雑学" },
+  { statement: "パナナは木になる果物である", answer: false, category: "雑学" },
+  { statement: "人間の血液型は4種類である", answer: true, category: "雑学" },
+  { statement: "地球の表面の約70%は水で覆われている", answer: true, category: "雑学" },
+  { statement: "稲妻の温度は太陽の表面温度より高い", answer: true, category: "雑学" },
+];
+
+// ========================================
+// SUPABASE
+// ========================================
+const SUPABASE_URL = 'https://mvnhojzeshbquobffkmq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bmhvanplc2hicXVvYmZma21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MjQ4NzgsImV4cCI6MjA4ODAwMDg3OH0.kJNoHqJpmC5PLuojOGrnmWBT4TMZG5HbIv7bFY1D3QI';
+const TABLE = 'true_false_blitz_scores';
+
+async function supabaseFetch(path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || '',
+      ...options.headers,
+    },
+  });
+  if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ========================================
+// GAME STATE
+// ========================================
+const GAME_TIME = 30;
+let score = 0;
+let combo = 0;
+let maxCombo = 0;
+let correctCount = 0;
+let totalAnswered = 0;
+let reactionTimes = [];
+let currentQuestion = null;
+let questionStartTime = 0;
+let questionIndex = 0;
+let shuffledQuestions = [];
+let timerInterval = null;
+let timeLeft = GAME_TIME;
+let gameActive = false;
+
+// ========================================
+// SCREEN MANAGEMENT
+// ========================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showTitle() {
+  showScreen('title-screen');
+  stopBGM();
+  updateBestScore();
+}
+
+function updateBestScore() {
+  const best = getBestLocal();
+  const el = document.getElementById('best-score-display');
+  if (best > 0) el.textContent = `🏅 ベストスコア: ${best}`;
+  else el.textContent = '';
+}
+
+function getBestLocal() {
+  const data = JSON.parse(localStorage.getItem('tf_blitz_scores') || '[]');
+  return data.length ? Math.max(...data.map(d => d.score)) : 0;
+}
+
+// ========================================
+// GAME LOGIC
+// ========================================
+function startGame() {
+  initAudio();
+  playSE('click');
+  showScreen('countdown-screen');
+  stopBGM();
+
+  // Reset state
+  score = 0;
+  combo = 0;
+  maxCombo = 0;
+  correctCount = 0;
+  totalAnswered = 0;
+  reactionTimes = [];
+  questionIndex = 0;
+  timeLeft = GAME_TIME;
+  gameActive = false;
+
+  // Shuffle questions
+  shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+
+  // Countdown
+  let count = 3;
+  const cdEl = document.getElementById('countdown-num');
+  cdEl.textContent = count;
+  cdEl.style.animation = 'none';
+  void cdEl.offsetWidth;
+  cdEl.style.animation = 'countPulse 0.6s ease-out';
+  playSE('countdown');
+
+  const cdInterval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      cdEl.textContent = count;
+      cdEl.style.animation = 'none';
+      void cdEl.offsetWidth;
+      cdEl.style.animation = 'countPulse 0.6s ease-out';
+      playSE('countdown');
+    } else if (count === 0) {
+      cdEl.textContent = 'GO!';
+      cdEl.style.animation = 'none';
+      void cdEl.offsetWidth;
+      cdEl.style.animation = 'countPulse 0.6s ease-out';
+      playSE('go');
+    } else {
+      clearInterval(cdInterval);
+      beginGame();
+    }
+  }, 700);
+}
+
+function beginGame() {
+  showScreen('game-screen');
+  gameActive = true;
+  startBGM();
+  updateHUD();
+  showNextQuestion();
+
+  // Timer
+  const startT = performance.now();
+  document.getElementById('timer-bar-fill').style.width = '100%';
+
+  timerInterval = setInterval(() => {
+    const elapsed = (performance.now() - startT) / 1000;
+    timeLeft = Math.max(0, GAME_TIME - elapsed);
+    document.getElementById('hud-timer').textContent = timeLeft.toFixed(1);
+    document.getElementById('timer-bar-fill').style.width = (timeLeft / GAME_TIME * 100) + '%';
+
+    // Color change in last 10s
+    if (timeLeft <= 10) {
+      document.getElementById('timer-bar-fill').style.background =
+        timeLeft <= 5 ? 'var(--fail)' : 'var(--accent)';
+    }
+
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 50);
+}
+
+function showNextQuestion() {
+  if (!gameActive) return;
+
+  // Cycle through shuffled questions
+  if (questionIndex >= shuffledQuestions.length) {
+    shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+    questionIndex = 0;
+  }
+
+  currentQuestion = shuffledQuestions[questionIndex];
+  questionIndex++;
+
+  document.getElementById('q-category').textContent = currentQuestion.category;
+  document.getElementById('q-number').textContent = `第${totalAnswered + 1}問`;
+  document.getElementById('q-statement').textContent = currentQuestion.statement;
+
+  // Reset button styles
+  document.getElementById('btn-true').className = 'tf-btn tf-btn-true';
+  document.getElementById('btn-false').className = 'tf-btn tf-btn-false';
+
+  questionStartTime = performance.now();
+}
+
+function answer(playerAnswer) {
+  if (!gameActive || !currentQuestion) return;
+
+  const reactionTime = performance.now() - questionStartTime;
+  reactionTimes.push(reactionTime);
+  totalAnswered++;
+
+  const isCorrect = (playerAnswer === currentQuestion.answer);
+
+  if (isCorrect) {
+    combo++;
+    if (combo > maxCombo) maxCombo = combo;
+    correctCount++;
+
+    // Score: base 100 + time bonus
+    const timeBonus = Math.round((timeLeft / GAME_TIME) * 50);
+    let comboBonus = 0;
+    if (combo > 0 && combo % 5 === 0) comboBonus = 100;
+    score += 100 + timeBonus + comboBonus;
+
+    playSE('correct');
+    showFlash('correct');
+    showAnswerIndicator('⭕');
+
+    // Highlight correct button
+    const btnId = playerAnswer ? 'btn-true' : 'btn-false';
+    document.getElementById(btnId).classList.add('correct');
+
+    if (comboBonus > 0) {
+      playSE('combo');
+      showComboPopup(`🔥 ${combo} COMBO!`);
+    }
+  } else {
+    combo = 0;
+    playSE('wrong');
+    showFlash('wrong');
+    showAnswerIndicator('❌');
+
+    const btnId = playerAnswer ? 'btn-true' : 'btn-false';
+    document.getElementById(btnId).classList.add('wrong');
+  }
+
+  updateHUD();
+
+  // Delay before next question
+  setTimeout(() => {
+    showNextQuestion();
+  }, 300);
+}
+
+function updateHUD() {
+  document.getElementById('hud-score').textContent = score;
+  const comboEl = document.getElementById('hud-combo');
+  if (combo >= 2) {
+    comboEl.textContent = `🔥 ${combo} COMBO`;
+  } else {
+    comboEl.textContent = '';
+  }
+}
+
+function showFlash(type) {
+  const el = document.createElement('div');
+  el.className = `flash-overlay flash-${type}`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 400);
+}
+
+function showAnswerIndicator(emoji) {
+  const el = document.createElement('div');
+  el.className = 'answer-indicator';
+  el.textContent = emoji;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 600);
+}
+
+function showComboPopup(text) {
+  const el = document.createElement('div');
+  el.className = 'combo-popup';
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+function endGame() {
+  gameActive = false;
+  clearInterval(timerInterval);
+  stopBGM();
+
+  // Show result
+  showScreen('result-screen');
+  document.getElementById('result-score').textContent = score;
+
+  const avgRT = reactionTimes.length > 0
+    ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+    : 0;
+
+  document.getElementById('result-stats').innerHTML =
+    `正解: ${correctCount} / ${totalAnswered}<br>` +
+    `最大コンボ: ${maxCombo}<br>` +
+    `平均反応時間: ${avgRT}ms`;
+
+  // Check new record
+  const best = getBestLocal();
+  const isNew = score > best;
+  document.getElementById('result-new-record').style.display = isNew ? 'block' : 'none';
+  if (isNew) playSE('newrecord');
+
+  // Restore saved name
+  const savedName = localStorage.getItem('tf_blitz_name') || '';
+  document.getElementById('player-name').value = savedName;
+  document.getElementById('save-btn').disabled = false;
+  document.getElementById('save-status').textContent = '';
+}
+
+// ========================================
+// SAVE SCORE
+// ========================================
+async function saveScore() {
+  const nameEl = document.getElementById('player-name');
+  const name = nameEl.value.trim();
+  if (!name) { nameEl.focus(); return; }
+
+  localStorage.setItem('tf_blitz_name', name);
+
+  const avgRT = reactionTimes.length > 0
+    ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+    : 0;
+
+  // Save to local
+  const localData = JSON.parse(localStorage.getItem('tf_blitz_scores') || '[]');
+  localData.push({
+    name, score,
+    correct: correctCount,
+    incorrect: totalAnswered - correctCount,
+    combo: maxCombo,
+    avg_reaction_time: avgRT,
+    date: new Date().toISOString()
+  });
+  localData.sort((a, b) => b.score - a.score);
+  if (localData.length > 50) localData.length = 50;
+  localStorage.setItem('tf_blitz_scores', JSON.stringify(localData));
+
+  // Save to Supabase
+  document.getElementById('save-btn').disabled = true;
+  document.getElementById('save-status').textContent = '保存中...';
+  document.getElementById('save-status').style.color = 'var(--dim)';
+
+  try {
+    await supabaseFetch(TABLE, {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify({
+        name,
+        score,
+        correct: correctCount,
+        incorrect: totalAnswered - correctCount,
+        combo: maxCombo,
+        avg_reaction_time: avgRT,
+      }),
+    });
+    document.getElementById('save-status').textContent = '✅ 保存しました！';
+    document.getElementById('save-status').style.color = 'var(--success)';
+    playSE('correct');
+  } catch (e) {
+    document.getElementById('save-status').textContent = '❌ 保存に失敗しました';
+    document.getElementById('save-status').style.color = 'var(--fail)';
+    document.getElementById('save-btn').disabled = false;
+  }
+}
+
+// ========================================
+// RANKING
+// ========================================
+let currentRankingTab = 'global';
+
+function showRanking() {
+  playSE('click');
+  showScreen('ranking-screen');
+  switchRankingTab('global');
+}
+
+function switchRankingTab(tab) {
+  currentRankingTab = tab;
+  document.getElementById('tab-global').className = 'ranking-tab' + (tab === 'global' ? ' active' : '');
+  document.getElementById('tab-local').className = 'ranking-tab' + (tab === 'local' ? ' active' : '');
+
+  if (tab === 'global') loadGlobalRanking();
+  else loadLocalRanking();
+}
+
+async function loadGlobalRanking() {
+  const list = document.getElementById('ranking-list');
+  list.innerHTML = '<div class="ranking-loading"><span class="spinner"></span>読み込み中...</div>';
+
+  try {
+    const data = await supabaseFetch(`${TABLE}?select=name,score,correct,combo,avg_reaction_time,created_at&order=score.desc&limit=50`);
+    renderRanking(data || []);
+  } catch (e) {
+    list.innerHTML = '<div class="ranking-loading">読み込みに失敗しました</div>';
+  }
+}
+
+function loadLocalRanking() {
+  const data = JSON.parse(localStorage.getItem('tf_blitz_scores') || '[]');
+  const mapped = data.map(d => ({
+    name: d.name,
+    score: d.score,
+    correct: d.correct,
+    combo: d.combo,
+    avg_reaction_time: d.avg_reaction_time,
+    created_at: d.date
+  }));
+  renderRanking(mapped);
+}
+
+function renderRanking(data) {
+  const list = document.getElementById('ranking-list');
+
+  if (!data.length) {
+    list.innerHTML = '<div class="ranking-loading">まだ記録がありません</div>';
+    return;
+  }
+
+  list.innerHTML = data.map((d, i) => {
+    const rank = i + 1;
+    const rankClass = rank <= 3 ? ` rank-${rank}` : '';
+    const medal = rank === 1 ? '👑' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+    const dateStr = d.created_at ? new Date(d.created_at).toLocaleDateString('ja-JP') : '';
+    return `<div class="ranking-item">
+      <div class="rank-num${rankClass}">${medal}</div>
+      <div class="rank-name">${escapeHtml(d.name)}<br><span style="font-size:0.75rem;color:var(--dim)">✅${d.correct || 0} 🔥${d.combo || 0} ⚡${d.avg_reaction_time || 0}ms</span></div>
+      <div style="text-align:right"><div class="rank-score">${d.score}</div><div class="rank-date">${dateStr}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ========================================
+// KEYBOARD SUPPORT
+// ========================================
+document.addEventListener('keydown', (e) => {
+  if (!gameActive) return;
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+    e.preventDefault();
+    answer(true);
+  } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+    e.preventDefault();
+    answer(false);
+  }
+});
+
+// ========================================
+// INIT
+// ========================================
+updateBestScore();
+</script>
+</body>
+</html>

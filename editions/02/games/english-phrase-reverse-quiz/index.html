@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Phrase Reverse Quiz</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #6C63FF;
+  --primary-dark: #5A52D5;
+  --accent: #FF6B6B;
+  --accent-green: #4ECB71;
+  --bg: #1a1a2e;
+  --bg-light: #16213e;
+  --card: #0f3460;
+  --text: #ffffff;
+  --text-sub: #a8b2d1;
+  --gold: #FFD700;
+  --silver: #C0C0C0;
+  --bronze: #CD7F32;
+}
+html, body {
+  width: 100%; height: 100%;
+  font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.screen {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 32px);
+  overflow-y: auto;
+}
+.screen.active { display: flex; }
+
+/* ========== Title Screen ========== */
+#title-screen {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  gap: clamp(16px, 3vh, 28px);
+}
+.title-icon { font-size: clamp(48px, 12vw, 80px); animation: bounce 2s ease-in-out infinite; }
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.title-main {
+  font-size: clamp(24px, 6.5vw, 44px);
+  font-weight: 900;
+  background: linear-gradient(135deg, #4ECB71, #FFD700, #6C63FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  line-height: 1.3;
+}
+.title-sub {
+  font-size: clamp(14px, 3.5vw, 18px);
+  color: var(--text-sub);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* Difficulty selector */
+.difficulty-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 8px 0;
+}
+.diff-btn {
+  padding: 12px 24px;
+  border: 2px solid var(--primary);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: clamp(14px, 3.5vw, 18px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 100px;
+}
+.diff-btn:hover, .diff-btn.selected {
+  background: var(--primary);
+  transform: scale(1.05);
+}
+.diff-btn.selected { box-shadow: 0 0 20px rgba(108, 99, 255, 0.5); }
+.diff-label {
+  display: block;
+  font-size: clamp(10px, 2.5vw, 12px);
+  color: var(--text-sub);
+  margin-top: 2px;
+  font-weight: 500;
+}
+.diff-btn.selected .diff-label { color: #ddd; }
+
+.start-btn {
+  padding: 16px 48px;
+  background: linear-gradient(135deg, var(--accent-green), #2EAA50);
+  border: none;
+  border-radius: 50px;
+  color: white;
+  font-family: inherit;
+  font-size: clamp(18px, 4.5vw, 24px);
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(78, 203, 113, 0.4);
+}
+.start-btn:hover { transform: scale(1.05); box-shadow: 0 6px 25px rgba(78, 203, 113, 0.6); }
+.start-btn:active { transform: scale(0.98); }
+
+/* ========== Countdown Screen ========== */
+#countdown-screen {
+  background: var(--bg);
+}
+.countdown-number {
+  font-size: clamp(100px, 25vw, 200px);
+  font-weight: 900;
+  color: var(--accent-green);
+  animation: countPulse 1s ease-in-out;
+}
+@keyframes countPulse {
+  0% { transform: scale(2); opacity: 0; }
+  50% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
+}
+
+/* ========== Game Screen ========== */
+#game-screen {
+  background: var(--bg);
+  justify-content: flex-start;
+  padding-top: clamp(12px, 2vh, 20px);
+  gap: 0;
+}
+.game-header {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: clamp(8px, 1.5vh, 12px);
+}
+.game-info {
+  font-size: clamp(14px, 3.5vw, 18px);
+  font-weight: 700;
+}
+.score-display { color: var(--gold); }
+.question-counter { color: var(--text-sub); }
+
+/* Timer bar */
+.timer-container {
+  width: 100%;
+  max-width: 600px;
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  margin-bottom: clamp(12px, 2vh, 20px);
+  overflow: hidden;
+}
+.timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-green), var(--gold), var(--accent));
+  border-radius: 4px;
+  transition: width 0.1s linear;
+  width: 100%;
+}
+.timer-bar.danger { background: linear-gradient(90deg, var(--accent), #ff3333); }
+
+/* Question area - REVERSE: Japanese situation as question */
+.question-area {
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+  margin-bottom: clamp(12px, 2vh, 24px);
+}
+.situation-label {
+  font-size: clamp(12px, 3vw, 14px);
+  color: var(--accent-green);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+.situation-display {
+  font-size: clamp(18px, 4.5vw, 28px);
+  font-weight: 900;
+  color: var(--text);
+  padding: clamp(16px, 3vh, 24px);
+  background: rgba(78, 203, 113, 0.08);
+  border: 2px solid rgba(78, 203, 113, 0.25);
+  border-radius: 16px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.situation-hint {
+  font-size: clamp(13px, 3.2vw, 16px);
+  color: var(--text-sub);
+  font-style: italic;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.situation-hint.visible {
+  opacity: 1;
+}
+.question-prompt {
+  font-size: clamp(15px, 3.8vw, 20px);
+  font-weight: 700;
+  color: var(--gold);
+  margin-top: clamp(8px, 1.5vh, 16px);
+}
+
+/* Choices - English phrases */
+.choices-container {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.5vh, 12px);
+}
+.choice-btn {
+  width: 100%;
+  padding: clamp(14px, 2.5vh, 20px) 20px;
+  background: var(--card);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  color: var(--text);
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  font-size: clamp(16px, 4vw, 22px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  line-height: 1.4;
+  position: relative;
+  overflow: hidden;
+}
+.choice-btn:hover:not(.disabled) {
+  border-color: var(--primary);
+  background: rgba(108, 99, 255, 0.15);
+  transform: translateX(4px);
+}
+.choice-btn:active:not(.disabled) { transform: scale(0.98); }
+.choice-btn .choice-label {
+  position: absolute;
+  left: 16px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900;
+  font-size: 14px;
+  font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+}
+.choice-btn .choice-text { margin-left: 40px; display: block; }
+
+.choice-btn.correct {
+  background: rgba(78, 203, 113, 0.2);
+  border-color: var(--accent-green);
+  animation: correctFlash 0.5s;
+}
+.choice-btn.correct .choice-label { background: var(--accent-green); }
+@keyframes correctFlash {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 30px rgba(78, 203, 113, 0.5); }
+}
+.choice-btn.wrong {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: var(--accent);
+  animation: wrongShake 0.4s;
+}
+.choice-btn.wrong .choice-label { background: var(--accent); }
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+.choice-btn.disabled { opacity: 0.5; pointer-events: none; }
+
+/* Points popup */
+.points-popup {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(32px, 8vw, 56px);
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 100;
+  animation: pointsFly 1s ease-out forwards;
+}
+.points-popup.plus { color: var(--accent-green); }
+.points-popup.zero { color: var(--accent); }
+@keyframes pointsFly {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+  100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); }
+}
+
+/* ========== Result Screen ========== */
+#result-screen {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  gap: clamp(12px, 2vh, 20px);
+}
+.result-title {
+  font-size: clamp(24px, 6vw, 36px);
+  font-weight: 900;
+}
+.result-score-box {
+  background: rgba(78, 203, 113, 0.1);
+  border: 2px solid rgba(78, 203, 113, 0.3);
+  border-radius: 20px;
+  padding: clamp(20px, 4vh, 32px) clamp(32px, 8vw, 64px);
+  text-align: center;
+}
+.result-score-label { font-size: clamp(14px, 3.5vw, 16px); color: var(--text-sub); }
+.result-score-value {
+  font-size: clamp(48px, 12vw, 72px);
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1.2;
+}
+.result-score-unit { font-size: clamp(16px, 4vw, 20px); color: var(--text-sub); }
+
+.result-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+.stat-item {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.stat-value {
+  font-size: clamp(20px, 5vw, 28px);
+  font-weight: 900;
+}
+.stat-label {
+  font-size: clamp(11px, 2.8vw, 13px);
+  color: var(--text-sub);
+}
+.stat-correct .stat-value { color: var(--accent-green); }
+.stat-wrong .stat-value { color: var(--accent); }
+
+.result-grade {
+  font-size: clamp(16px, 4vw, 22px);
+  font-weight: 700;
+  padding: 8px 24px;
+  border-radius: 50px;
+  text-align: center;
+}
+
+.result-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.result-btn {
+  padding: 14px 32px;
+  border: none;
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: clamp(15px, 3.8vw, 18px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.result-btn:hover { transform: scale(1.05); }
+.retry-btn { background: linear-gradient(135deg, var(--accent-green), #2EAA50); color: white; }
+.home-btn { background: rgba(255,255,255,0.1); color: var(--text); border: 2px solid rgba(255,255,255,0.2) !important; }
+
+/* ========== Ranking Screen ========== */
+#ranking-screen {
+  background: var(--bg);
+  justify-content: flex-start;
+  padding-top: clamp(16px, 3vh, 24px);
+  gap: clamp(12px, 2vh, 16px);
+}
+.ranking-title {
+  font-size: clamp(22px, 5.5vw, 32px);
+  font-weight: 900;
+}
+.ranking-tabs {
+  display: flex;
+  gap: 0;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.rank-tab {
+  padding: 10px 24px;
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.rank-tab.active { background: var(--accent-green); color: white; }
+.ranking-list {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 50vh;
+  padding: 4px;
+}
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--card);
+  border-radius: 12px;
+}
+.rank-pos {
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: 900;
+  width: 36px;
+  text-align: center;
+}
+.rank-pos.gold { color: var(--gold); }
+.rank-pos.silver { color: var(--silver); }
+.rank-pos.bronze { color: var(--bronze); }
+.rank-info { flex: 1; }
+.rank-score {
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: 900;
+  color: var(--gold);
+}
+.rank-diff {
+  font-size: clamp(11px, 2.5vw, 12px);
+  color: var(--text-sub);
+}
+.rank-detail {
+  font-size: clamp(11px, 2.5vw, 12px);
+  color: var(--text-sub);
+}
+.rank-empty {
+  text-align: center;
+  color: var(--text-sub);
+  padding: 32px;
+}
+.back-btn {
+  padding: 12px 32px;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 50px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+</style>
+<style>:root{--arcade-accent:#a8d9c5;}</style>
+<link rel="stylesheet" href="../../assets/game.css">
+</head>
+<body data-arcade="english-phrase-reverse-quiz">
+<nav class="arcade-bar" aria-label="ゲームナビゲーション"><a href="../../index.html">← ARCADE</a><span>SCENARIO <b>02</b></span><button id="arcade-fullscreen" aria-label="全画面で遊ぶ">全画面 ↗</button></nav>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="title-screen" class="screen active">
+  <div class="title-icon">🔄</div>
+  <div class="title-main">英語フレーズ<br>逆引きクイズ</div>
+  <div class="title-sub">日本語のシチュエーションから<br>ピッタリの英語フレーズを当てよう！<br>速く答えるほど高得点🔥</div>
+  <div style="font-size:clamp(14px,3.5vw,16px); font-weight:700; color:var(--text-sub);">難易度を選んでね</div>
+  <div class="difficulty-selector">
+    <button class="diff-btn" data-diff="easy" onclick="selectDifficulty('easy')">
+      🌱 初級<span class="diff-label">基本フレーズ</span>
+    </button>
+    <button class="diff-btn selected" data-diff="medium" onclick="selectDifficulty('medium')">
+      🔥 中級<span class="diff-label">日常表現</span>
+    </button>
+    <button class="diff-btn" data-diff="hard" onclick="selectDifficulty('hard')">
+      💀 上級<span class="diff-label">ネイティブ表現</span>
+    </button>
+    <button class="diff-btn" data-diff="travel" onclick="selectDifficulty('travel')">
+      ✈️ 旅行<span class="diff-label">海外旅行編</span>
+    </button>
+  </div>
+  <button class="start-btn" onclick="startGame()">スタート！</button>
+  <button class="back-btn" onclick="showRanking()" style="font-size:clamp(13px,3vw,15px); padding:8px 20px;">🏆 ランキング</button>
+</div>
+
+<!-- ===== COUNTDOWN SCREEN ===== -->
+<div id="countdown-screen" class="screen">
+  <div class="countdown-number" id="countdown-num">3</div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <div class="game-info question-counter" id="q-counter">Q1 / 10</div>
+    <div class="game-info score-display" id="score-display">🔥 0 pt</div>
+  </div>
+  <div class="timer-container">
+    <div class="timer-bar" id="timer-bar"></div>
+  </div>
+  <div class="question-area">
+    <div class="situation-label">💬 こんな場面で使いたい！</div>
+    <div class="situation-display" id="situation-display">初対面のパーティーで場を和ませたい時</div>
+    <div class="situation-hint" id="situation-hint"></div>
+    <div class="question-prompt">👇 英語でなんて言う？</div>
+  </div>
+  <div class="choices-container" id="choices-container"></div>
+</div>
+
+<!-- ===== RESULT SCREEN ===== -->
+<div id="result-screen" class="screen">
+  <div class="result-title">🎉 結果発表</div>
+  <div class="result-score-box">
+    <div class="result-score-label">あなたのスコア</div>
+    <div class="result-score-value" id="final-score">0</div>
+    <div class="result-score-unit">points</div>
+  </div>
+  <div class="result-stats">
+    <div class="stat-item stat-correct">
+      <div class="stat-value" id="correct-count">0</div>
+      <div class="stat-label">⭕ 正解</div>
+    </div>
+    <div class="stat-item stat-wrong">
+      <div class="stat-value" id="wrong-count">0</div>
+      <div class="stat-label">❌ 不正解</div>
+    </div>
+  </div>
+  <div class="result-grade" id="result-grade"></div>
+  <div class="result-buttons">
+    <button class="result-btn retry-btn" onclick="startGame()">🔄 もう一度</button>
+    <button class="result-btn home-btn" onclick="showScreen('title-screen'); stopBGM();">🏠 タイトル</button>
+  </div>
+  <button class="back-btn" onclick="showRanking()" style="margin-top:4px;">🏆 ランキング</button>
+</div>
+
+<!-- ===== RANKING SCREEN ===== -->
+<div id="ranking-screen" class="screen">
+  <div class="ranking-title">🏆 ランキング</div>
+  <div class="ranking-tabs">
+    <button class="rank-tab active" onclick="switchRankTab('all')" id="tab-all">🌟 全記録</button>
+    <button class="rank-tab" onclick="switchRankTab('easy')" id="tab-easy">🌱 初級</button>
+    <button class="rank-tab" onclick="switchRankTab('medium')" id="tab-medium">🔥 中級</button>
+    <button class="rank-tab" onclick="switchRankTab('hard')" id="tab-hard">💀 上級</button>
+    <button class="rank-tab" onclick="switchRankTab('travel')" id="tab-travel">✈️ 旅行</button>
+  </div>
+  <div class="ranking-list" id="ranking-list"></div>
+  <button class="back-btn" onclick="showScreen('title-screen')">← 戻る</button>
+</div>
+
+<script>
+// ===== QUESTIONS DATABASE =====
+// Same data as original, but now:
+//   - "correct" (Japanese situation) → becomes the QUESTION
+//   - "phrase" (English phrase) → becomes the CORRECT ANSWER
+//   - Wrong choices are other phrases from the same difficulty
+const QUESTIONS = {
+easy: [
+  { phrase: "Thank you", hint: "感謝を伝える基本表現", situation: "友達がプレゼントをくれた時" },
+  { phrase: "Excuse me", hint: "注意を引く・許可を求める", situation: "混んだ電車で降りたい時" },
+  { phrase: "No problem", hint: "問題ないよ、大丈夫", situation: "お礼を言われて「気にしないで」と返す時" },
+  { phrase: "I'm sorry", hint: "謜罪・残念な気持ち", situation: "約束の時間に遅刻してしまった時" },
+  { phrase: "Good luck", hint: "幸運を祈る", situation: "明日テストがある友達を励ます時" },
+  { phrase: "That's great!", hint: "いいね！素晴らしい！", situation: "友達が試験に合格したと聞いた時" },
+  { phrase: "Take care", hint: "気をつけてね", situation: "友達と別れる時に声をかける" },
+  { phrase: "Never mind", hint: "気にしないで", situation: "相手が聞き返してきたけど大したことじゃない時" },
+  { phrase: "Sounds good", hint: "いいね、それで行こう", situation: "ランチにカレーを提案されて賛成する時" },
+  { phrase: "I'm fine", hint: "大丈夫、元気です", situation: "「調子どう？」と聞かれて答える時" },
+  { phrase: "See you later", hint: "またね", situation: "学校帰りに友達と別れる時" },
+  { phrase: "You're welcome", hint: "どういたしまして", situation: "お礼を言われた時に返す" },
+  { phrase: "Go ahead", hint: "どうぞ", situation: "エレベーターで相手を先に通す時" },
+  { phrase: "Let me see", hint: "えーっと、見せて", situation: "メニューを見て何を頼むか考える時" },
+  { phrase: "Just a moment", hint: "ちょっと待ってね", situation: "電話で保留にする時" },
+],
+medium: [
+  { phrase: "break the ice", hint: "ぎこちない雰囲気を和らげる", situation: "初対面のパーティーで場を和ませたい時" },
+  { phrase: "hit the nail on the head", hint: "的を射た発言", situation: "会議で誰かが問題の核心をズバリ指摘した時" },
+  { phrase: "spill the beans", hint: "秘密をバラす", situation: "サプライズパーティーの計画をうっかり漏らした時" },
+  { phrase: "call it a day", hint: "今日はここまでにする", situation: "長時間の作業を切り上げる時" },
+  { phrase: "under the weather", hint: "体調が悪い", situation: "風邪気味で仕事を休みたいと伝える時" },
+  { phrase: "a piece of cake", hint: "とても簡単", situation: "試験が予想以上に簡単だった時" },
+  { phrase: "hit the books", hint: "猛勉強する", situation: "来週の期末試験に向けて勉強を始める時" },
+  { phrase: "on the same page", hint: "同じ認識・意見", situation: "チームの方針について全員の認識を合わせる時" },
+  { phrase: "sleep on it", hint: "一晩考える", situation: "大きな買い物の決断を翌日に持ち越す時" },
+  { phrase: "bite the bullet", hint: "覚悞を決めてやる", situation: "怙いけ㝭死医者の予約を入れる時" },
+  { phrase: "let the cat out of the bag", hint: "秘密をうっかり漏らす", situation: "サプライズの内容をつい口にしてしまった時" },
+  { phrase: "get cold feet", hint: "怖気づく・尻込みする", situation: "大事なプレゼン直前に急に不安になった時" },
+  { phrase: "cut corners", hint: "手を抜く・近道する", situation: "締め切りに間に合わせるため品質を妥協する時" },
+  { phrase: "the ball is in your court", hint: "あなた次第・あなたの番", situation: "提案を出して相手の返答を待つ時" },
+  { phrase: "once in a blue moon", hint: "めったにない", situation: "普段インドア派の友達が珍しく外出した時" },
+],
+hard: [
+  { phrase: "burning the midnight oil", hint: "夜遅くまで働く", situation: "締め切り前夜に徹夜で仕事する時" },
+  { phrase: "the elephant in the room", hint: "皆気づいてるけど訡れない問題", situation: "会議で誰もがわかっている問題をあえて避けている時" },
+  { phrase: "go down the rabbit hole", hint: "深入りする・没頭する", situation: "Wikipediaで調べ物を始めたら止まらなくなった時" },
+  { phrase: "barking up the wrong tree", hint: "見当違いのことをしている", situation: "犯人だと思って追及したら全くの別人だった時" },
+  { phrase: "throw in the towel", hint: "諮める・降参する", situation: "何度挑戦しても無理だと判断した時" },
+  { phrase: "read between the lines", hint: "行間を読む・真意を汲み取る", situation: "上司の遠回しなメールの本当の意味を理解する時" },
+  { phrase: "play it by ear", hint: "自ꩯ応変にやる", situation: "旅行の予定を決めずに現地な考える時" },
+  { phrase: "jump on the bandwagon", hint: "流行に乗る・便乗する", situation: "みんなが始めたSNSを自分も始める時" },
+  { phrase: "a blessing in disguise", hint: "不幸に見えて実は幸運", situation: "電車に乗り遅れたら事故が起きていた時" },
+  { phrase: "steal someone's thunder", hint: "人の手柄を横取りする", situation: "自分のアイデアを先に上司が発表してしまった時" },
+  { phrase: "beat around the bush", hint: "遠回して言う", situation: "言いにくいことを直接言えずにぼかす時" },
+  { phrase: "pull someone's leg", hint: "からかう・冗談を言う", situation: "嘘っぽい話で友達をからかう時" },
+  { phrase: "cost an arm and a leg", hint: "非常に高い", situation: "最新のスマホが信じられないほど高額だった時" },
+  { phrase: "when pigs fly", hint: "絶対にありえない", situation: "実現不可能な約束に皮肉を込めて返す時" },
+  { phrase: "the last straw", hint: "我慢の限界", situation: "度重なる問題の末ついに惔りが爆発した時" },
+],
+travel: [
+  { phrase: "I'd like to check in", hint: "チェックインしたい", situation: "ホテルのフロントに到着して手続きをする時" },
+  { phrase: "Where is the boarding gate?", hint: "搭乗口はどこ？", situation: "空港で飛行機に乗る場所がわからない時" },
+  { phrase: "Could I have the menu, please?", hint: "メニューをください", situation: "レストランに着席してメニューを見たい時" },
+  { phrase: "How much is this?", hint: "いくらですか？", situation: "お土産屋さんで値段が書いてない商品を見つけた時" },
+  { phrase: "Can I try this on?", hint: "試着できますか？", situation: "洋服屋で気になる服を着てみたい時" },
+  { phrase: "I have a reservation under...", hint: "〜の名前で予約してます", situation: "予約したレストランに到着して名前を伝える時" },
+  { phrase: "Could you take a photo of us?", hint: "写真を撮ってもらえますか？", situation: "観光地で通りがかりの人に記念撮影を頼む時" },
+  { phrase: "Is there Wi-Fi here?", hint: "Wi-Fiはありますか？", situation: "カフェに入ってインターネットを使いたい時" },
+  { phrase: "I'm allergic to...", hint: "〜にアレルギーがあります", situation: "レストランで食物アレルギーを伝える時" },
+  { phrase: "What time does it close?", hint: "何時に閉まりますか？", situation: "観光スポットの営業時間を確認したい時" },
+  { phrase: "Can I pay by credit card?", hint: "クレジットカードは使えますか？", situation: "お店で支払い方法を確認する時" },
+  { phrase: "I'd like a window seat", hint: "窓側の席がいいです", situation: "飛行機のチェックインで座席の希望を伝える時" },
+  { phrase: "Could you call a taxi for me?", hint: "タクシーを呼んでもらえますか？", situation: "ホテルから空港へ向かうためタクシーが必要な時" },
+  { phrase: "Excuse me, how do I get to...?", hint: "〜への行き方を教えて", situation: "街中で目的地への道順を聞きたい時" },
+  { phrase: "I'd like to exchange currency", hint: "両替したい", situation: "空港や銀行で現地通貨に換えたい時" },
+]
+};
+
+// ===== GAME STATE =====
+let currentDifficulty = 'medium';
+let currentQuestions = [];
+let currentQ = 0;
+let score = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let timerInterval = null;
+let timeLeft = 15;
+const TIME_LIMIT = 15;
+const TOTAL_Q = 10;
+let answered = false;
+
+// ===== AUDIO =====
+let audioCtx = null;
+let bgmInterval = null;
+let bgmOscillators = [];
+let bgmGain = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playSE(type) {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+
+  if (type === 'correct') {
+    [0, 0.08, 0.16].forEach((delay, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(arcadeAudioDestination(audioCtx));
+      osc.type = 'sine';
+      osc.frequency.value = [523, 659, 784][i];
+      gain.gain.setValueAtTime(0.25, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.3);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.3);
+    });
+  } else if (type === 'wrong') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(arcadeAudioDestination(audioCtx));
+    osc.type = 'sawtooth';
+    osc.frequency.value = 150;
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  } else if (type === 'countdown') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(arcadeAudioDestination(audioCtx));
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } else if (type === 'go') {
+    [0, 0.1, 0.2].forEach((delay, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(arcadeAudioDestination(audioCtx));
+      osc.type = 'square';
+      osc.frequency.value = [440, 554, 880][i];
+      gain.gain.setValueAtTime(0.12, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.2);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.2);
+    });
+  } else if (type === 'tick') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(arcadeAudioDestination(audioCtx));
+    osc.type = 'sine';
+    osc.frequency.value = 1000;
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc.start(now);
+    osc.stop(now + 0.05);
+  } else if (type === 'timewarning') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(arcadeAudioDestination(audioCtx));
+    osc.type = 'triangle';
+    osc.frequency.value = 600;
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.3);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } else if (type === 'result') {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(arcadeAudioDestination(audioCtx));
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.2, now + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.4);
+      osc.start(now + i * 0.15);
+      osc.stop(now + i * 0.15 + 0.4);
+    });
+  }
+}
+
+// BGM
+function startBGM() {
+  if (!audioCtx) return;
+  stopBGM();
+
+  bgmGain = audioCtx.createGain();
+  bgmGain.gain.value = 0.04;
+  bgmGain.connect(arcadeAudioDestination(audioCtx));
+
+  const drone = audioCtx.createOscillator();
+  drone.type = 'sine';
+  drone.frequency.value = 110;
+  drone.connect(bgmGain);
+  drone.start();
+  bgmOscillators.push(drone);
+
+  const lfo = audioCtx.createOscillator();
+  const lfoGain = audioCtx.createGain();
+  lfo.type = 'sine';
+  lfo.frequency.value = 2;
+  lfoGain.gain.value = 0.02;
+  lfo.connect(lfoGain);
+  lfoGain.connect(bgmGain.gain);
+  lfo.start();
+  bgmOscillators.push(lfo);
+
+  bgmInterval = setInterval(() => {
+    if (audioCtx && bgmGain) {
+      const now = audioCtx.currentTime;
+      const tick = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      tick.connect(g);
+      g.connect(arcadeAudioDestination(audioCtx));
+      tick.type = 'sine';
+      tick.frequency.value = timeLeft <= 5 ? 800 : 600;
+      g.gain.setValueAtTime(timeLeft <= 5 ? 0.08 : 0.04, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      tick.start(now);
+      tick.stop(now + 0.05);
+    }
+  }, timeLeft <= 5 ? 250 : 500);
+}
+
+function stopBGM() {
+  if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
+  bgmOscillators.forEach(o => { try { o.stop(); } catch(e){} });
+  bgmOscillators = [];
+  bgmGain = null;
+}
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== DIFFICULTY =====
+function selectDifficulty(diff) {
+  currentDifficulty = diff;
+  document.querySelectorAll('.diff-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.diff === diff);
+  });
+}
+
+// ===== GAME FLOW =====
+function startGame() {
+  initAudio();
+  score = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  currentQ = 0;
+
+  // Shuffle and pick questions
+  const pool = [...QUESTIONS[currentDifficulty]];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  currentQuestions = pool.slice(0, TOTAL_Q);
+
+  // Countdown
+  showScreen('countdown-screen');
+  let count = 3;
+  const countEl = document.getElementById('countdown-num');
+  countEl.textContent = count;
+  countEl.style.animation = 'none';
+  void countEl.offsetWidth;
+  countEl.style.animation = 'countPulse 1s ease-in-out';
+  playSE('countdown');
+
+  const countdownTimer = setInterval(() => {
+    count--;
+    if (count > 0) {
+      countEl.textContent = count;
+      countEl.style.animation = 'none';
+      void countEl.offsetWidth;
+      countEl.style.animation = 'countPulse 1s ease-in-out';
+      playSE('countdown');
+    } else {
+      clearInterval(countdownTimer);
+      countEl.textContent = 'GO!';
+      countEl.style.color = 'var(--accent-green)';
+      countEl.style.animation = 'none';
+      void countEl.offsetWidth;
+      countEl.style.animation = 'countPulse 1s ease-in-out';
+      playSE('go');
+      setTimeout(() => {
+        countEl.style.color = 'var(--accent-green)';
+        showScreen('game-screen');
+        showQuestion();
+        startBGM();
+      }, 600);
+    }
+  }, 1000);
+}
+
+function showQuestion() {
+  answered = false;
+  const q = currentQuestions[currentQ];
+
+  document.getElementById('q-counter').textContent = `Q${currentQ + 1} / ${TOTAL_Q}`;
+  document.getElementById('score-display').textContent = `🔥 ${score} pt`;
+
+  // REVERSE: Show Japanese situation as question
+  document.getElementById('situation-display').textContent = q.situation;
+  const hintEl = document.getElementById('situation-hint');
+  hintEl.textContent = q.hint ? `💡 ヒント: ${q.hint}` : '';
+  hintEl.classList.remove('visible');
+
+  // Build choices: correct phrase + 3 wrong phrases from same difficulty
+  const allPhrases = QUESTIONS[currentDifficulty].map(item => item.phrase);
+  const wrongPhrases = allPhrases.filter(p => p !== q.phrase);
+  // Shuffle wrong phrases and pick 3
+  for (let i = wrongPhrases.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [wrongPhrases[i], wrongPhrases[j]] = [wrongPhrases[j], wrongPhrases[i]];
+  }
+  const wrongChoices = wrongPhrases.slice(0, 3);
+
+  const choices = [
+    { text: q.phrase, isCorrect: true },
+    ...wrongChoices.map(w => ({ text: w, isCorrect: false }))
+  ];
+  // Shuffle choices
+  for (let i = choices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [choices[i], choices[j]] = [choices[j], choices[i]];
+  }
+
+  const container = document.getElementById('choices-container');
+  container.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-label">${labels[i]}</span><span class="choice-text">${c.text}</span>`;
+    btn.onclick = () => handleAnswer(btn, c.isCorrect, container);
+    container.appendChild(btn);
+  });
+
+  // Start timer
+  timeLeft = TIME_LIMIT;
+  const timerBar = document.getElementById('timer-bar');
+  timerBar.style.width = '100%';
+  timerBar.classList.remove('danger');
+
+  if (timerInterval) clearInterval(timerInterval);
+  const startTime = Date.now();
+  timerInterval = setInterval(() => {
+    if (answered) return;
+    const elapsed = (Date.now() - startTime) / 1000;
+    timeLeft = Math.max(0, TIME_LIMIT - elapsed);
+    const pct = (timeLeft / TIME_LIMIT) * 100;
+    timerBar.style.width = pct + '%';
+
+    // Show hint when timer reaches half
+    if (timeLeft <= TIME_LIMIT / 2) {
+      document.getElementById('situation-hint').classList.add('visible');
+    }
+
+    if (timeLeft <= 5) {
+      timerBar.classList.add('danger');
+      if (bgmInterval) { clearInterval(bgmInterval); }
+      bgmInterval = setInterval(() => {
+        if (audioCtx) {
+          const now = audioCtx.currentTime;
+          const tick = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          tick.connect(g); g.connect(arcadeAudioDestination(audioCtx));
+          tick.type = 'sine';
+          tick.frequency.value = 800;
+          g.gain.setValueAtTime(0.08, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          tick.start(now);
+          tick.stop(now + 0.04);
+        }
+      }, 200);
+    }
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      handleTimeout(container);
+    }
+  }, 50);
+}
+
+function handleAnswer(btn, isCorrect, container) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  container.querySelectorAll('.choice-btn').forEach(b => b.classList.add('disabled'));
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    const timeBonus = Math.round((timeLeft / TIME_LIMIT) * 800) + 200;
+    score += timeBonus;
+    correctCount++;
+    playSE('correct');
+    showPointsPopup(`+${timeBonus}`, true);
+  } else {
+    btn.classList.add('wrong');
+    wrongCount++;
+    playSE('wrong');
+    showPointsPopup('+0', false);
+
+    // Show correct answer
+    const correctPhrase = currentQuestions[currentQ].phrase;
+    container.querySelectorAll('.choice-btn').forEach(b => {
+      const text = b.querySelector('.choice-text').textContent;
+      if (text === correctPhrase) {
+        b.classList.add('correct');
+      }
+    });
+  }
+
+  document.getElementById('score-display').textContent = `🔥 ${score} pt`;
+  setTimeout(() => nextQuestion(), 1500);
+}
+
+function handleTimeout(container) {
+  if (answered) return;
+  answered = true;
+  wrongCount++;
+  playSE('timewarning');
+  showPointsPopup('⏰ TIME UP', false);
+
+  const correctPhrase = currentQuestions[currentQ].phrase;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.classList.add('disabled');
+    const text = b.querySelector('.choice-text').textContent;
+    if (text === correctPhrase) {
+      b.classList.add('correct');
+    }
+  });
+
+  setTimeout(() => nextQuestion(), 1500);
+}
+
+function showPointsPopup(text, isPlus) {
+  const popup = document.createElement('div');
+  popup.className = `points-popup ${isPlus ? 'plus' : 'zero'}`;
+  popup.textContent = text;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 1000);
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= TOTAL_Q) {
+    showResult();
+  } else {
+    stopBGM();
+    startBGM();
+    showQuestion();
+  }
+}
+
+function showResult() {
+  stopBGM();
+  if (timerInterval) clearInterval(timerInterval);
+  playSE('result');
+
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('correct-count').textContent = correctCount;
+  document.getElementById('wrong-count').textContent = wrongCount;
+
+  const pct = correctCount / TOTAL_Q;
+  const gradeEl = document.getElementById('result-grade');
+  let gradeText, gradeBg;
+  if (pct >= 0.9) { gradeText = '🏆 Excellent! フレーズマスター！'; gradeBg = 'rgba(255,215,0,0.2)'; }
+  else if (pct >= 0.7) { gradeText = '🎯 Great! いい感じ！'; gradeBg = 'rgba(78,203,113,0.2)'; }
+  else if (pct >= 0.5) { gradeText = '💪 Good! もう少し！'; gradeBg = 'rgba(108,99,255,0.2)'; }
+  else { gradeText = '📚 Keep going! 復習しよう！'; gradeBg = 'rgba(255,107,107,0.2)'; }
+  gradeEl.textContent = gradeText;
+  gradeEl.style.background = gradeBg;
+
+  saveScore();
+
+  const scoreEl = document.getElementById('final-score');
+  let displayScore = 0;
+  const step = Math.max(1, Math.floor(score / 30));
+  const scoreAnim = setInterval(() => {
+    displayScore = Math.min(displayScore + step, score);
+    scoreEl.textContent = displayScore;
+    if (displayScore >= score) clearInterval(scoreAnim);
+  }, 30);
+
+  showScreen('result-screen');
+}
+
+// ===== LOCAL RANKING =====
+function saveScore() {
+  const key = 'arcade-v2:eprq-scores';
+  const scores = JSON.parse(localStorage.getItem(key) || '[]');
+  const diffLabels = { easy: '初級', medium: '中級', hard: '上級', travel: '旅行' };
+  scores.push({
+    score,
+    correct: correctCount,
+    total: TOTAL_Q,
+    difficulty: currentDifficulty,
+    diffLabel: diffLabels[currentDifficulty],
+    date: new Date().toLocaleDateString('ja-JP')
+  });
+  scores.sort((a, b) => b.score - a.score);
+  if (scores.length > 50) scores.length = 50;
+  localStorage.setItem(key, JSON.stringify(scores));
+}
+
+function showRanking(filterDiff = 'all') {
+  showScreen('ranking-screen');
+  renderRanking(filterDiff);
+}
+
+function switchRankTab(diff) {
+  document.querySelectorAll('.rank-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${diff}`).classList.add('active');
+  renderRanking(diff);
+}
+
+function renderRanking(filterDiff) {
+  const scores = JSON.parse(localStorage.getItem('arcade-v2:eprq-scores') || '[]');
+  const filtered = filterDiff === 'all' ? scores : scores.filter(s => s.difficulty === filterDiff);
+  const list = document.getElementById('ranking-list');
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="rank-empty">まだ記録がありません<br>プレイして記録を残そう！🎯</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map((s, i) => {
+    const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
+    return `
+      <div class="rank-item">
+        <div class="rank-pos ${posClass}">${medal}</div>
+        <div class="rank-info">
+          <div class="rank-diff">${s.diffLabel} | ${s.date}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="rank-score">${s.score}</div>
+          <div class="rank-detail">${s.correct}/${s.total} 正解</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+</script>
+<script>window.arcadeMeta={"slug": "english-phrase-reverse-quiz", "name": "英語フレーズ逆引き", "en": "SCENARIO", "category": "ことば・学習", "color": "#a8d9c5", "desc": "伝えたいことから英語を探す。シーンにぴったりの一言は？", "rule": "日本語の状況に合う英語を4択で選ぶ。3段階の難易度と旅行編。", "keys": "1〜4 / A〜D", "mark": "「 」"};</script><script src="../../assets/game.js"></script>
+</body>
+</html>
